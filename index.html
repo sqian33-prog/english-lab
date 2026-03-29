@@ -488,6 +488,8 @@ function App() {
   const [reviewSchedule, setReviewSchedule] = useState([]);
   const [dailyLog, setDailyLog] = useState({});
   const [storageLoaded, setStorageLoaded] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
+  const [userName, setUserName] = useState("");
 
   useEffect(() => {
     async function load() {
@@ -506,6 +508,10 @@ function App() {
       try {
         const dl = await Storage.get("dailyLog");
         if (dl) setDailyLog(JSON.parse(dl.value));
+      } catch {}
+      try {
+        const un = await Storage.get("userName");
+        if (un) setUserName(un.value);
       } catch {}
       setStorageLoaded(true);
     }
@@ -530,6 +536,12 @@ function App() {
   const saveDaily = useCallback(async (data) => {
     setDailyLog(data);
     try { await Storage.set("dailyLog", JSON.stringify(data)); } catch {}
+  }, []);
+
+  const saveUserName = useCallback(async (name) => {
+    setUserName(name);
+    try { await Storage.set("userName", name); } catch {}
+    setShowSettings(false);
   }, []);
 
   const resetAll = useCallback(async () => {
@@ -575,9 +587,16 @@ function App() {
               </h1>
               <p style={{ fontSize: 12, color: "rgba(255,255,255,.6)", marginTop: 2 }}>六年级英语提分工具</p>
             </div>
-            <div style={{ textAlign: "right" }}>
-              <div style={{ fontSize: 12, color: "rgba(255,255,255,.6)" }}>累计学习</div>
-              <div style={{ fontSize: 20, fontWeight: 700 }}>{stats.streakDays} <span style={{fontSize:12,fontWeight:400}}>天</span></div>
+            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              {userName && (
+                <div style={{ fontSize: 13, color: "rgba(255,255,255,.7)", textAlign: "right" }}>
+                  <div style={{ fontSize: 11, opacity: 0.6 }}>当前用户</div>
+                  <div style={{ fontWeight: 600 }}>{userName}</div>
+                </div>
+              )}
+              <button onClick={() => setShowSettings(true)} style={{ background: "rgba(255,255,255,.15)", border: "1px solid rgba(255,255,255,.25)", borderRadius: 10, padding: "8px 14px", color: "#fff", fontSize: 18, display: "flex", alignItems: "center", gap: 6, cursor: "pointer" }}>
+                ⚙️ <span style={{ fontSize: 13 }}>设置</span>
+              </button>
             </div>
           </div>
           <div style={{ display: "flex", gap: 8, marginTop: 16, overflowX: "auto", paddingBottom: 4 }}>
@@ -614,9 +633,43 @@ function App() {
         {view === "review" && <ReviewView vocabProgress={vocabProgress} saveVocab={saveVocab} reviewSchedule={reviewSchedule} saveReview={saveReview} todayStr={todayStr} />}
       </div>
 
+      {/* SETTINGS MODAL */}
+      {showSettings && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.5)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
+          <div style={{ background: "#fff", borderRadius: 20, padding: 28, width: "100%", maxWidth: 360, boxShadow: "0 20px 60px rgba(0,0,0,.2)" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
+              <h2 style={{ fontSize: 18, fontWeight: 700 }}>⚙️ 设置</h2>
+              <button onClick={() => setShowSettings(false)} style={{ background: "none", fontSize: 20, color: "#999", padding: 4 }}>✕</button>
+            </div>
+            <div style={{ marginBottom: 20 }}>
+              <label style={{ fontSize: 14, fontWeight: 600, color: "#333", display: "block", marginBottom: 8 }}>用户名（用于多设备同步）</label>
+              <input
+                className="quiz-input"
+                type="text"
+                placeholder="输入名字，如：小明"
+                defaultValue={userName}
+                id="settings-name-input"
+                style={{ marginBottom: 10 }}
+              />
+              <button
+                onClick={() => {
+                  const val = document.getElementById("settings-name-input").value.trim();
+                  if (val) saveUserName(val);
+                }}
+                style={{ width: "100%", padding: "12px", background: "linear-gradient(135deg, #4a7dff, #43e97b)", color: "#fff", borderRadius: 12, fontSize: 15, fontWeight: 600, cursor: "pointer" }}
+              >保存名字</button>
+              {userName && <p style={{ fontSize: 12, color: "#4caf50", marginTop: 8, textAlign: "center" }}>当前用户：{userName}</p>}
+            </div>
+            <div style={{ borderTop: "1px solid #eee", paddingTop: 16 }}>
+              <button onClick={resetAll} style={{ width: "100%", padding: "10px", background: "#fff", border: "1px solid #e0e0e0", borderRadius: 10, fontSize: 14, color: "#999", cursor: "pointer" }}>🗑 重置所有进度</button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* FOOTER */}
       <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, background: "rgba(250,249,247,.95)", backdropFilter: "blur(10px)", borderTop: "1px solid #eee", padding: "8px 16px", textAlign: "center" }}>
-        <button onClick={resetAll} style={{ fontSize: 12, color: "#999", background: "none", padding: "4px 12px" }}>重置进度</button>
+        <span style={{ fontSize: 11, color: "#bbb" }}>English Lab · 六年级英语提分</span>
       </div>
     </div>
   );
