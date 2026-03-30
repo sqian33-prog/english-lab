@@ -31,6 +31,7 @@
 <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
 <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
 <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script type="text/babel">
 const { useState, useEffect, useCallback, useMemo } = React;
 
@@ -448,30 +449,151 @@ const READING_DATA = [
 const EBBINGHAUS_INTERVALS = [1, 2, 4, 7, 15, 30];
 
 // ============================================================
-// STORAGE
+// SUPABASE CLOUD STORAGE
+// ============================================================
+const SUPABASE_URL = 'https://nvynnmwpwirnjognvtuw.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52eW5ubXdwd2lybmpvZ252dHV3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ3OTU1NTYsImV4cCI6MjA5MDM3MTU1Nn0.moxCk9T4umF1plxNfvi14tBT3L7B4NJJ4HZG74JJf7g';
+
+let supabase = null;
+let currentCloudUser = null;
+let cloudWritePending = false;
+let cloudWriteTimer = null;
+
+function initSupabase() {
+  if (!supabase) {
+    supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  }
+  return supabase;
+}
+
+async function loadFromCloud(userName) {
+  if (!userName) return null;
+  try {
+    const sb = initSupabase();
+    const { data, error } = await sb
+      .from('user_progress')
+      .select('*')
+      .eq('user_name', userName)
+      .single();
+    if (error || !data) return null;
+    return data;
+  } catch { return null; }
+}
+
+async function saveToCloud(userName, progress) {
+  if (!userName) return;
+  try {
+    const sb = initSupabase();
+    await sb.from('user_progress').upsert({
+      user_name: userName,
+      vocab_progress: progress.vocabProgress || {},
+      grammar_progress: progress.grammarProgress || {},
+      review_schedule: progress.reviewSchedule || [],
+      daily_log: progress.dailyLog || {},
+      updated_at: new Date().toISOString()
+    });
+  } catch (e) { /* silent fail */ }
+}
+
+async function deleteCloudUser(userName) {
+  if (!userName) return;
+  try {
+    const sb = initSupabase();
+    await sb.from('user_progress').delete().eq('user_name', userName);
+  } catch { /* silent fail */ }
+}
+
+// ============================================================
+// STORAGE (local + cloud sync)
 // ============================================================
 const Storage = {
+  _cache: {},
+  _localLoaded: false,
+
+  async _ensureLocal() {
+    if (this._localLoaded) return;
+    try {
+      this._cache.vocabProgress = JSON.parse(localStorage.getItem('vocabProgress') || '{}');
+      this._cache.grammarProgress = JSON.parse(localStorage.getItem('grammarProgress') || '{}');
+      this._cache.reviewSchedule = JSON.parse(localStorage.getItem('reviewSchedule') || '[]');
+      this._cache.dailyLog = JSON.parse(localStorage.getItem('dailyLog') || '{}');
+    } catch {}
+    this._localLoaded = true;
+  },
+
   get(key) {
-    return new Promise((resolve) => {
-      try {
-        const val = localStorage.getItem(key);
-        resolve(val ? { value: val } : null);
-      } catch { resolve(null); }
+    return new Promise(async (resolve) => {
+      await this._ensureLocal();
+      const val = this._cache[key] !== undefined ? JSON.stringify(this._cache[key]) : localStorage.getItem(key);
+      resolve(val ? { value: val } : null);
     });
   },
+
   set(key, value) {
-    return new Promise((resolve) => {
+    return new Promise(async (resolve) => {
       try {
         localStorage.setItem(key, value);
-        resolve();
-      } catch { resolve(); }
-    });
-  },
-  delete(key) {
-    return new Promise((resolve) => {
-      try { localStorage.removeItem(key); } catch {}
+        // update cache
+        try { this._cache[key] = JSON.parse(value); } catch { this._cache[key] = value; }
+        // debounce cloud write
+        if (cloudWriteTimer) clearTimeout(cloudWriteTimer);
+        cloudWriteTimer = setTimeout(() => {
+          if (currentCloudUser) {
+            saveToCloud(currentCloudUser, this._cache);
+          }
+        }, 2000);
+      } catch {}
       resolve();
     });
+  },
+
+  delete(key) {
+    return new Promise((resolve) => {
+      try {
+        localStorage.removeItem(key);
+        delete this._cache[key];
+      } catch {}
+      resolve();
+    });
+  },
+
+  async loadCloud(userName) {
+    const data = await loadFromCloud(userName);
+    if (!data) return false;
+    try {
+      if (data.vocab_progress) {
+        localStorage.setItem('vocabProgress', JSON.stringify(data.vocab_progress));
+        this._cache.vocabProgress = data.vocab_progress;
+      }
+      if (data.grammar_progress) {
+        localStorage.setItem('grammarProgress', JSON.stringify(data.grammar_progress));
+        this._cache.grammarProgress = data.grammar_progress;
+      }
+      if (data.review_schedule) {
+        localStorage.setItem('reviewSchedule', JSON.stringify(data.review_schedule));
+        this._cache.reviewSchedule = data.review_schedule;
+      }
+      if (data.daily_log) {
+        localStorage.setItem('dailyLog', JSON.stringify(data.daily_log));
+        this._cache.dailyLog = data.daily_log;
+      }
+      return true;
+    } catch { return false; }
+  },
+
+  async setCloudUser(userName) {
+    currentCloudUser = userName;
+    if (userName) {
+      await this._ensureLocal();
+      await saveToCloud(userName, this._cache);
+    }
+  },
+
+  async deleteCloud() {
+    if (currentCloudUser) {
+      await deleteCloudUser(currentCloudUser);
+    }
+    currentCloudUser = null;
   }
 };
 
@@ -511,7 +633,22 @@ function App() {
       } catch {}
       try {
         const un = await Storage.get("userName");
-        if (un) setUserName(un.value);
+        if (un && un.value) {
+          setUserName(un.value);
+          // Try to load from cloud
+          const loaded = await Storage.loadCloud(un.value);
+          if (loaded) {
+            // Reload state from cloud
+            const vp2 = await Storage.get("vocabProgress");
+            if (vp2) setVocabProgress(JSON.parse(vp2.value));
+            const gp2 = await Storage.get("grammarProgress");
+            if (gp2) setGrammarProgress(JSON.parse(gp2.value));
+            const rs2 = await Storage.get("reviewSchedule");
+            if (rs2) setReviewSchedule(JSON.parse(rs2.value));
+            const dl2 = await Storage.get("dailyLog");
+            if (dl2) setDailyLog(JSON.parse(dl2.value));
+          }
+        }
       } catch {}
       setStorageLoaded(true);
     }
@@ -541,6 +678,19 @@ function App() {
   const saveUserName = useCallback(async (name) => {
     setUserName(name);
     try { await Storage.set("userName", name); } catch {}
+    // Load from cloud
+    const loaded = await Storage.loadCloud(name);
+    if (loaded) {
+      const vp = await Storage.get("vocabProgress");
+      if (vp) setVocabProgress(JSON.parse(vp.value));
+      const gp = await Storage.get("grammarProgress");
+      if (gp) setGrammarProgress(JSON.parse(gp.value));
+      const rs = await Storage.get("reviewSchedule");
+      if (rs) setReviewSchedule(JSON.parse(rs.value));
+      const dl = await Storage.get("dailyLog");
+      if (dl) setDailyLog(JSON.parse(dl.value));
+    }
+    await Storage.setCloudUser(name);
     setShowSettings(false);
   }, []);
 
@@ -555,6 +705,7 @@ function App() {
         await Storage.delete("grammarProgress");
         await Storage.delete("reviewSchedule");
         await Storage.delete("dailyLog");
+        await Storage.deleteCloud();
       } catch {}
     }
   }, []);
