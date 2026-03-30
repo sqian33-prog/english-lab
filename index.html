@@ -467,23 +467,26 @@ function initSupabase() {
 }
 
 async function loadFromCloud(userName) {
-  if (!userName) return null;
+  if (!userName) { console.log('[Cloud] No user, skip load'); return null; }
   try {
     const sb = initSupabase();
+    console.log('[Cloud] Loading from cloud:', userName);
     const { data, error } = await sb
       .from('user_progress')
       .select('*')
       .eq('user_name', userName)
       .single();
-    if (error || !data) return null;
+    if (error || !data) { console.log('[Cloud] Load: no data found'); return null; }
+    console.log('[Cloud] Load SUCCESS:', Object.keys(data.vocab_progress || {}));
     return data;
-  } catch { return null; }
+  } catch (e) { console.error('[Cloud] Load FAILED:', e.message); return null; }
 }
 
 async function saveToCloud(userName, progress) {
-  if (!userName) return;
+  if (!userName) { console.log('[Cloud] No user, skip save'); return; }
   try {
     const sb = initSupabase();
+    console.log('[Cloud] Saving to cloud:', userName, Object.keys(progress.vocabProgress || {}));
     await sb.from('user_progress').upsert({
       user_name: userName,
       vocab_progress: progress.vocabProgress || {},
@@ -492,7 +495,8 @@ async function saveToCloud(userName, progress) {
       daily_log: progress.dailyLog || {},
       updated_at: new Date().toISOString()
     });
-  } catch (e) { /* silent fail */ }
+    console.log('[Cloud] Save SUCCESS');
+  } catch (e) { console.error('[Cloud] Save FAILED:', e.message); /* silent fail */ }
 }
 
 async function deleteCloudUser(userName) {
@@ -582,6 +586,7 @@ const Storage = {
   },
 
   async setCloudUser(userName) {
+    console.log('[Cloud] setCloudUser called:', userName);
     currentCloudUser = userName;
     if (userName) {
       await this._ensureLocal();
