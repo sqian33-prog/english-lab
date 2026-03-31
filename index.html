@@ -459,9 +459,27 @@ let currentCloudUser = null;
 let cloudWritePending = false;
 let cloudWriteTimer = null;
 
-function initSupabase() {
+async function waitForSupabase(maxWaitMs = 5000) {
+  if (window.supabase) return true;
+  const start = Date.now();
+  while (!window.supabase && Date.now() - start < maxWaitMs) {
+    await new Promise(r => setTimeout(r, 100));
+  }
+  return !!window.supabase;
+}
+
+async function initSupabase() {
   if (!supabase) {
+    if (!window.supabase) {
+      console.log('[Cloud] Waiting for Supabase SDK to load...');
+      const available = await waitForSupabase();
+      if (!available) {
+        console.error('[Cloud] FAILED: Supabase SDK not loaded (cdn might be blocked)');
+        return null;
+      }
+    }
     supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    console.log('[Cloud] Supabase client initialized');
   }
   return supabase;
 }
@@ -469,7 +487,8 @@ function initSupabase() {
 async function loadFromCloud(userName) {
   if (!userName) { console.log('[Cloud] No user, skip load'); return null; }
   try {
-    const sb = initSupabase();
+    const sb = await initSupabase();
+    if (!sb) { console.log('[Cloud] Load skipped: SDK unavailable'); return null; }
     console.log('[Cloud] Loading from cloud:', userName);
     const { data, error } = await sb
       .from('user_progress')
@@ -485,7 +504,8 @@ async function loadFromCloud(userName) {
 async function saveToCloud(userName, progress) {
   if (!userName) { console.log('[Cloud] No user, skip save'); return; }
   try {
-    const sb = initSupabase();
+    const sb = await initSupabase();
+    if (!sb) { console.log('[Cloud] Save skipped: SDK unavailable'); return; }
     console.log('[Cloud] Saving to cloud:', userName, Object.keys(progress.vocabProgress || {}));
     await sb.from('user_progress').upsert({
       user_name: userName,
@@ -502,7 +522,8 @@ async function saveToCloud(userName, progress) {
 async function deleteCloudUser(userName) {
   if (!userName) return;
   try {
-    const sb = initSupabase();
+    const sb = await initSupabase();
+    if (!sb) return;
     await sb.from('user_progress').delete().eq('user_name', userName);
   } catch { /* silent fail */ }
 }
