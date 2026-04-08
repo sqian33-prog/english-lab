@@ -33,277 +33,482 @@
 <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 <script src="/supabase.js"></script>
 <script type="text/babel">
-const { useState, useEffect, useCallback, useMemo } = React;
+const { useState, useEffect, useCallback, useMemo, useRef } = React;
 
 // ============================================================
-// DATA
+// SUPABASE CONFIG
 // ============================================================
-const VOCAB_DATA = {
-  1: {
-    name: "Everyone is different",
-    words: [
-      { en: "different", zh: "不同的；有区别的", phonetic: "/ˈdɪfrənt/", pos: "adj." },
-      { en: "notice", zh: "注意；通知", phonetic: "/ˈnəʊtɪs/", pos: "v./n." },
-      { en: "swan", zh: "天鹅", phonetic: "/swɒn/", pos: "n." },
-      { en: "partner", zh: "搭档；同伴", phonetic: "/ˈpɑːtnə(r)/", pos: "n." },
-      { en: "slim", zh: "苗条的；纤细的", phonetic: "/slɪm/", pos: "adj." },
-      { en: "fat", zh: "肥的；胖的", phonetic: "/fæt/", pos: "adj." },
-      { en: "curly", zh: "卷曲状的", phonetic: "/ˈkɜːli/", pos: "adj." },
-      { en: "straight", zh: "直的", phonetic: "/streɪt/", pos: "adj." },
-      { en: "T-shirt", zh: "T恤衫", phonetic: "/ˈtiː ʃɜːt/", pos: "n." },
-      { en: "jeans", zh: "牛仔裤", phonetic: "/dʒiːnz/", pos: "n.(pl.)" },
-      { en: "size", zh: "大小；尺码", phonetic: "/saɪz/", pos: "n." },
-      { en: "shape", zh: "形状；外形", phonetic: "/ʃeɪp/", pos: "n." },
-      { en: "skin", zh: "皮肤", phonetic: "/skɪn/", pos: "n." },
-      { en: "special", zh: "特殊的；特别的", phonetic: "/ˈspeʃl/", pos: "adj." },
-      { en: "number", zh: "编号；数字；数量", phonetic: "/ˈnʌmbə(r)/", pos: "n." },
-      { en: "than", zh: "比", phonetic: "/ðæn/", pos: "prep." },
-      { en: "fair", zh: "浅色的；白皙的", phonetic: "/feə(r)/", pos: "adj." },
-      { en: "talent", zh: "天才；天赋", phonetic: "/ˈtælənt/", pos: "n." },
-      { en: "programme", zh: "节目单；计划", phonetic: "/ˈprəʊɡræm/", pos: "n." },
-      { en: "hall", zh: "礼堂；大厅", phonetic: "/hɔːl/", pos: "n." },
-      { en: "butterfly", zh: "蝴蝶", phonetic: "/ˈbʌtəflaɪ/", pos: "n." },
-      { en: "violin", zh: "小提琴", phonetic: "/ˌvaɪəˈlɪn/", pos: "n." },
-      { en: "host", zh: "节目主持人", phonetic: "/həʊst/", pos: "n." },
-      { en: "sound", zh: "听起来；声音", phonetic: "/saʊnd/", pos: "v./n." },
-      { en: "exciting", zh: "令人激动的", phonetic: "/ɪkˈsaɪtɪŋ/", pos: "adj." },
-      { en: "anything", zh: "任何事物", phonetic: "/ˈeniθɪŋ/", pos: "pron." },
-      { en: "someone", zh: "某人", phonetic: "/ˈsʌmwʌn/", pos: "pron." },
-      { en: "drum", zh: "打鼓；鼓", phonetic: "/drʌm/", pos: "v./n." },
-      { en: "voice", zh: "嗓音；说话声", phonetic: "/vɔɪs/", pos: "n." },
-      { en: "person", zh: "人；个人", phonetic: "/ˈpɜːsn/", pos: "n." },
-      { en: "hobby", zh: "业余爱好", phonetic: "/ˈhɒbi/", pos: "n." },
-      { en: "personality", zh: "性格；个性", phonetic: "/ˌpɜːsəˈnæləti/", pos: "n." },
-      { en: "ability", zh: "才能；本领；能力", phonetic: "/əˈbɪləti/", pos: "n." },
-      { en: "accept", zh: "接受；同意", phonetic: "/əkˈsept/", pos: "v." },
-      { en: "wise", zh: "充满智慧的；明智的", phonetic: "/waɪz/", pos: "adj." },
-      { en: "without", zh: "没有；缺乏", phonetic: "/wɪˈðaʊt/", pos: "prep." },
-      { en: "doubt", zh: "疑惑；疑问", phonetic: "/daʊt/", pos: "n." },
-      { en: "laugh", zh: "笑；发笑", phonetic: "/lɑːf/", pos: "v." },
-      { en: "smile", zh: "微笑；笑", phonetic: "/smaɪl/", pos: "v." },
-      { en: "feather", zh: "羽毛", phonetic: "/ˈfeðə(r)/", pos: "n." },
-      { en: "future", zh: "将来；未来", phonetic: "/ˈfjuːtʃə(r)/", pos: "n." },
-      { en: "skill", zh: "技巧；技艺", phonetic: "/skɪl/", pos: "n." },
-      { en: "unique", zh: "唯一的；独一无二的", phonetic: "/juˈniːk/", pos: "adj." },
-      { en: "mean", zh: "意思是", phonetic: "/miːn/", pos: "v." },
-      { en: "noticeboard", zh: "布告栏；布告板", phonetic: "/ˈnəʊtɪsbɔːd/", pos: "n." },
-      { en: "would", zh: "将；将会", phonetic: "/wʊd/", pos: "modal v." },
-    ]
-  },
-  2: {
-    name: "Rules around us",
-    words: [
-      { en: "rule", zh: "规则；规定", phonetic: "/ruːl/", pos: "n." },
-      { en: "underground", zh: "地铁", phonetic: "/ˌʌndəˈɡraʊnd/", pos: "n." },
-      { en: "pay", zh: "付钱；付费", phonetic: "/peɪ/", pos: "v." },
-      { en: "attention", zh: "注意；注意力", phonetic: "/əˈtenʃn/", pos: "n." },
-      { en: "pay attention to", zh: "注意", phonetic: "", pos: "phrase" },
-      { en: "gate", zh: "大门", phonetic: "/ɡeɪt/", pos: "n." },
-      { en: "lean", zh: "倚靠；倾斜", phonetic: "/liːn/", pos: "v." },
-      { en: "litter", zh: "乱扔垃圾", phonetic: "/ˈlɪtə(r)/", pos: "v." },
-      { en: "station", zh: "车站", phonetic: "/ˈsteɪʃn/", pos: "n." },
-      { en: "announcement", zh: "通告", phonetic: "/əˈnaʊnsmənt/", pos: "n." },
-      { en: "passenger", zh: "乘客", phonetic: "/ˈpæsɪndʒə(r)/", pos: "n." },
-      { en: "rush", zh: "冲；急奔", phonetic: "/rʌʃ/", pos: "v." },
-      { en: "line", zh: "线", phonetic: "/laɪn/", pos: "n." },
-      { en: "life", zh: "生命；生活", phonetic: "/laɪf/", pos: "n." },
-      { en: "seat", zh: "座位", phonetic: "/siːt/", pos: "n." },
-      { en: "smoke", zh: "吸烟；冒烟", phonetic: "/sməʊk/", pos: "v." },
-      { en: "anyone", zh: "任何人", phonetic: "/ˈeniwʌn/", pos: "pron." },
-      { en: "leave", zh: "离开；留下", phonetic: "/liːv/", pos: "v." },
-      { en: "rubbish", zh: "垃圾", phonetic: "/ˈrʌbɪʃ/", pos: "n." },
-      { en: "glove", zh: "手套", phonetic: "/ɡlʌv/", pos: "n." },
-      { en: "broken", zh: "破损的；破碎的", phonetic: "/ˈbrəʊkən/", pos: "adj." },
-      { en: "container", zh: "容器", phonetic: "/kənˈteɪnə(r)/", pos: "n." },
-      { en: "ready", zh: "准备好的", phonetic: "/ˈredi/", pos: "adj." },
-      { en: "follow", zh: "跟随；遵循", phonetic: "/ˈfɒləʊ/", pos: "v." },
-      { en: "stay", zh: "停留；逗留", phonetic: "/steɪ/", pos: "v." },
-      { en: "grow", zh: "生长；成长", phonetic: "/ɡrəʊ/", pos: "v." },
-      { en: "important", zh: "重要的", phonetic: "/ɪmˈpɔːtənt/", pos: "adj." },
-      { en: "take turns", zh: "轮流", phonetic: "", pos: "phrase" },
-      { en: "model", zh: "模型", phonetic: "/ˈmɒdl/", pos: "n." },
-    ]
-  },
-  3: {
-    name: "Festivals across cultures",
-    words: [
-      { en: "festival", zh: "节日", phonetic: "/ˈfestɪvl/", pos: "n." },
-      { en: "culture", zh: "文化", phonetic: "/ˈkʌltʃə(r)/", pos: "n." },
-      { en: "across", zh: "穿过；横跨", phonetic: "/əˈkrɒs/", pos: "prep." },
-      { en: "luck", zh: "运气；好运", phonetic: "/lʌk/", pos: "n." },
-      { en: "lucky", zh: "幸运的", phonetic: "/ˈlʌki/", pos: "adj." },
-      { en: "spring roll", zh: "春卷", phonetic: "", pos: "n." },
-      { en: "porridge", zh: "粥", phonetic: "/ˈpɒrɪdʒ/", pos: "n." },
-      { en: "click", zh: "点击", phonetic: "/klɪk/", pos: "v." },
-      { en: "eve", zh: "前夕", phonetic: "/iːv/", pos: "n." },
-      { en: "tradition", zh: "传统；风俗", phonetic: "/trəˈdɪʃn/", pos: "n." },
-      { en: "country", zh: "国家；乡村", phonetic: "/ˈkʌntri/", pos: "n." },
-      { en: "wealth", zh: "财富；财产", phonetic: "/welθ/", pos: "n." },
-      { en: "hope", zh: "希望", phonetic: "/həʊp/", pos: "v./n." },
-      { en: "pass on", zh: "传递；传承", phonetic: "", pos: "phrase" },
-      { en: "midnight", zh: "午夜", phonetic: "/ˈmɪdnaɪt/", pos: "n." },
-      { en: "international", zh: "国际的", phonetic: "/ˌɪntəˈnæʃnəl/", pos: "adj." },
-      { en: "event", zh: "事件；活动", phonetic: "/ɪˈvent/", pos: "n." },
-      { en: "square", zh: "广场", phonetic: "/skweə(r)/", pos: "n." },
-      { en: "symphony", zh: "交响乐", phonetic: "/ˈsɪmfəni/", pos: "n." },
-      { en: "theatre", zh: "剧场", phonetic: "/ˈθɪətə(r)/", pos: "n." },
-      { en: "concert", zh: "音乐会", phonetic: "/ˈkɒnsət/", pos: "n." },
-      { en: "firework", zh: "烟花", phonetic: "/ˈfaɪəwɜːk/", pos: "n." },
-      { en: "count", zh: "数；计算", phonetic: "/kaʊnt/", pos: "v." },
-      { en: "search", zh: "搜索", phonetic: "/sɜːtʃ/", pos: "v." },
-      { en: "prince", zh: "王子", phonetic: "/prɪns/", pos: "n." },
-      { en: "check", zh: "核实；检查", phonetic: "/tʃek/", pos: "v." },
-      { en: "information", zh: "信息；资料", phonetic: "/ˌɪnfəˈmeɪʃn/", pos: "n." },
-      { en: "performance", zh: "表演；演出", phonetic: "/pəˈfɔːməns/", pos: "n." },
-      { en: "invite", zh: "邀请", phonetic: "/ɪnˈvaɪt/", pos: "v." },
-      { en: "hate", zh: "讨厌；憎恨", phonetic: "/heɪt/", pos: "v." },
-      { en: "refuse", zh: "拒绝；抵制", phonetic: "/rɪˈfjuːz/", pos: "v." },
-      { en: "celebrate", zh: "庆祝；庆贺", phonetic: "/ˈselɪbreɪt/", pos: "v." },
-      { en: "calendar", zh: "日历", phonetic: "/ˈkælɪndə(r)/", pos: "n." },
-      { en: "lunar calendar", zh: "农历", phonetic: "", pos: "n." },
-      { en: "post", zh: "邮寄；发布", phonetic: "/pəʊst/", pos: "v." },
-      { en: "full", zh: "满的；饱的", phonetic: "/fʊl/", pos: "adj." },
-      { en: "mostly", zh: "主要地", phonetic: "/ˈməʊstli/", pos: "adv." },
-      { en: "harvest", zh: "收获；收成", phonetic: "/ˈhɑːvɪst/", pos: "n." },
-      { en: "tonight", zh: "今晚", phonetic: "/təˈnaɪt/", pos: "adv." },
-      { en: "traditional", zh: "传统的", phonetic: "/trəˈdɪʃnəl/", pos: "adj." },
-      { en: "nut", zh: "坚果", phonetic: "/nʌt/", pos: "n." },
-      { en: "sugar", zh: "糖", phonetic: "/ˈʃʊɡə(r)/", pos: "n." },
-      { en: "meal", zh: "一餐；一顿饭", phonetic: "/miːl/", pos: "n." },
-      { en: "experience", zh: "经验；经历", phonetic: "/ɪkˈspɪəriəns/", pos: "n." },
-    ]
-  },
-  4: {
-    name: "Weather and our lives",
-    words: [
-      { en: "airport", zh: "机场", phonetic: "/ˈeəpɔːt/", pos: "n." },
-      { en: "location", zh: "地点；位置", phonetic: "/ləʊˈkeɪʃn/", pos: "n." },
-      { en: "capital", zh: "首都；省会", phonetic: "/ˈkæpɪtl/", pos: "n." },
-      { en: "foggy", zh: "有雾的", phonetic: "/ˈfɒɡi/", pos: "adj." },
-      { en: "north", zh: "北方", phonetic: "/nɔːθ/", pos: "n." },
-      { en: "south", zh: "南方", phonetic: "/saʊθ/", pos: "n." },
-      { en: "quite", zh: "相当；十分", phonetic: "/kwaɪt/", pos: "adv." },
-      { en: "temperature", zh: "温度", phonetic: "/ˈtemprətʃə(r)/", pos: "n." },
-      { en: "degree", zh: "度数；程度", phonetic: "/dɪˈɡriː/", pos: "n." },
-      { en: "drop", zh: "下降；落下", phonetic: "/drɒp/", pos: "v." },
-      { en: "dry", zh: "干的；干燥的", phonetic: "/draɪ/", pos: "adj." },
-      { en: "still", zh: "仍然", phonetic: "/stɪl/", pos: "adv." },
-      { en: "wind", zh: "风", phonetic: "/wɪnd/", pos: "n." },
-      { en: "cloud", zh: "云", phonetic: "/klaʊd/", pos: "n." },
-      { en: "fog", zh: "雾", phonetic: "/fɒɡ/", pos: "n." },
-      { en: "skate", zh: "溜冰；滑冰", phonetic: "/skeɪt/", pos: "v." },
-      { en: "news", zh: "新闻；消息", phonetic: "/njuːz/", pos: "n." },
-      { en: "picnic", zh: "野餐", phonetic: "/ˈpɪknɪk/", pos: "n." },
-      { en: "wave", zh: "波浪", phonetic: "/weɪv/", pos: "n." },
-      { en: "heat", zh: "高温；热", phonetic: "/hiːt/", pos: "n." },
-      { en: "heatwave", zh: "热浪", phonetic: "/ˈhiːtweɪv/", pos: "n." },
-      { en: "hit", zh: "打击；袭击", phonetic: "/hɪt/", pos: "v." },
-      { en: "several", zh: "几个；数个", phonetic: "/ˈsevrəl/", pos: "det./pron." },
-      { en: "break", zh: "打破", phonetic: "/breɪk/", pos: "v." },
-      { en: "record", zh: "记录", phonetic: "/ˈrekɔːd/", pos: "n./v." },
-      { en: "wet", zh: "潮湿的", phonetic: "/wet/", pos: "adj." },
-    ]
-  },
-  5: {
-    name: "Green neighbourhood",
-    words: [
-      { en: "neighbourhood", zh: "街区；社区", phonetic: "/ˈneɪbəhʊd/", pos: "n." },
-      { en: "plastic", zh: "塑料的", phonetic: "/ˈplæstɪk/", pos: "adj." },
-      { en: "waste", zh: "浪费；废物", phonetic: "/weɪst/", pos: "v./n." },
-      { en: "electricity", zh: "电", phonetic: "/ɪˌlekˈtrɪsəti/", pos: "n." },
-      { en: "tap", zh: "水龙头", phonetic: "/tæp/", pos: "n." },
-      { en: "brush", zh: "刷", phonetic: "/brʌʃ/", pos: "v." },
-      { en: "tooth", zh: "牙齿", phonetic: "/tuːθ/", pos: "n." },
-      { en: "bin", zh: "箱子；垃圾桶", phonetic: "/bɪn/", pos: "n." },
-      { en: "save", zh: "节省；拯救", phonetic: "/seɪv/", pos: "v." },
-      { en: "store", zh: "储存；储藏", phonetic: "/stɔː(r)/", pos: "v." },
-      { en: "even", zh: "甚至", phonetic: "/ˈiːvn/", pos: "adv." },
-      { en: "huge", zh: "巨大的", phonetic: "/hjuːdʒ/", pos: "adj." },
-      { en: "government", zh: "政府", phonetic: "/ˈɡʌvənmənt/", pos: "n." },
-      { en: "encourage", zh: "鼓励；支持", phonetic: "/ɪnˈkʌrɪdʒ/", pos: "v." },
-      { en: "public", zh: "公共的", phonetic: "/ˈpʌblɪk/", pos: "adj." },
-      { en: "transport", zh: "交通运输", phonetic: "/ˈtrænspɔːt/", pos: "n." },
-      { en: "environmental", zh: "环境的", phonetic: "/ɪnˌvaɪrənˈmentl/", pos: "adj." },
-      { en: "electric", zh: "电动的", phonetic: "/ɪˈlektrɪk/", pos: "adj." },
-      { en: "building", zh: "建筑物", phonetic: "/ˈbɪldɪŋ/", pos: "n." },
-      { en: "low", zh: "低的", phonetic: "/ləʊ/", pos: "adj." },
-      { en: "energy", zh: "能量；能源", phonetic: "/ˈenədʒi/", pos: "n." },
-      { en: "low-energy", zh: "低能耗的", phonetic: "", pos: "adj." },
-      { en: "however", zh: "然而", phonetic: "/haʊˈevə(r)/", pos: "adv." },
-      { en: "build", zh: "建造", phonetic: "/bɪld/", pos: "v." },
-      { en: "reduce", zh: "减少；降低", phonetic: "/rɪˈdjuːs/", pos: "v." },
-      { en: "recycle", zh: "回收利用", phonetic: "/ˌriːˈsaɪkl/", pos: "v." },
-      { en: "bottle", zh: "瓶子", phonetic: "/ˈbɒtl/", pos: "n." },
-      { en: "repair", zh: "修理；修补", phonetic: "/rɪˈpeə(r)/", pos: "v." },
-      { en: "item", zh: "一件物品", phonetic: "/ˈaɪtəm/", pos: "n." },
-      { en: "cloth", zh: "布料", phonetic: "/klɒθ/", pos: "n." },
-      { en: "sort", zh: "整理；分类", phonetic: "/sɔːt/", pos: "v." },
-      { en: "pick up", zh: "捡起；拾起", phonetic: "", pos: "phrase" },
-      { en: "soon", zh: "很快；不久", phonetic: "/suːn/", pos: "adv." },
-      { en: "cause", zh: "导致；引起", phonetic: "/kɔːz/", pos: "v." },
-      { en: "increase", zh: "增加；增长", phonetic: "/ɪnˈkriːs/", pos: "v." },
-      { en: "cool", zh: "凉爽的", phonetic: "/kuːl/", pos: "adj." },
-    ]
-  },
-  6: {
-    name: "Famous people in history",
-    words: [
-      { en: "soldier", zh: "军人；士兵", phonetic: "/ˈsəʊldʒə(r)/", pos: "n." },
-      { en: "lose", zh: "失去；丢失", phonetic: "/luːz/", pos: "v." },
-      { en: "admire", zh: "钦佩；赞赏", phonetic: "/ədˈmaɪə(r)/", pos: "v." },
-      { en: "poem", zh: "诗歌", phonetic: "/ˈpəʊɪm/", pos: "n." },
-      { en: "path", zh: "小路；小径", phonetic: "/pɑːθ/", pos: "n." },
-      { en: "herb", zh: "草药", phonetic: "/hɜːb/", pos: "n." },
-      { en: "beg your pardon", zh: "请再说一遍", phonetic: "", pos: "phrase" },
-      { en: "danger", zh: "危险", phonetic: "/ˈdeɪndʒə(r)/", pos: "n." },
-      { en: "daily", zh: "每日的；日常的", phonetic: "/ˈdeɪli/", pos: "adj." },
-      { en: "smart", zh: "聪明的", phonetic: "/smɑːt/", pos: "adj." },
-      { en: "general", zh: "全体的；总的", phonetic: "/ˈdʒenərəl/", pos: "adj." },
-      { en: "discover", zh: "发现", phonetic: "/dɪsˈkʌvə(r)/", pos: "v." },
-      { en: "bulb", zh: "电灯泡", phonetic: "/bʌlb/", pos: "n." },
-      { en: "invent", zh: "发明", phonetic: "/ɪnˈvent/", pos: "v." },
-      { en: "inexpensive", zh: "便宜的", phonetic: "/ˌɪnɪkˈspensɪv/", pos: "adj." },
-      { en: "publish", zh: "出版；发行", phonetic: "/ˈpʌblɪʃ/", pos: "v." },
-      { en: "theory", zh: "学说；理论", phonetic: "/ˈθɪəri/", pos: "n." },
-      { en: "real", zh: "真正的；真实的", phonetic: "/rɪəl/", pos: "adj." },
-      { en: "inventor", zh: "发明家", phonetic: "/ɪnˈventə(r)/", pos: "n." },
-      { en: "power", zh: "电力；力量", phonetic: "/ˈpaʊə(r)/", pos: "n." },
-      { en: "power station", zh: "发电厂", phonetic: "", pos: "n." },
-      { en: "die", zh: "死亡", phonetic: "/daɪ/", pos: "v." },
-      { en: "successful", zh: "成功的", phonetic: "/səkˈsesfl/", pos: "adj." },
-      { en: "invention", zh: "发明", phonetic: "/ɪnˈvenʃn/", pos: "n." },
-      { en: "saver", zh: "节省者；救星", phonetic: "/ˈseɪvə(r)/", pos: "n." },
-      { en: "medicine", zh: "医学；药", phonetic: "/ˈmedsn/", pos: "n." },
-      { en: "spend", zh: "花费", phonetic: "/spend/", pos: "v." },
-      { en: "sick", zh: "生病的；有病的", phonetic: "/sɪk/", pos: "adj." },
-      { en: "create", zh: "创造；创作", phonetic: "/kriˈeɪt/", pos: "v." },
-      { en: "character", zh: "角色；人物", phonetic: "/ˈkærəktə(r)/", pos: "n." },
-      { en: "stage", zh: "舞台", phonetic: "/steɪdʒ/", pos: "n." },
-      { en: "million", zh: "百万", phonetic: "/ˈmɪljən/", pos: "num." },
-      { en: "mark", zh: "标记；记号", phonetic: "/mɑːk/", pos: "n./v." },
-      { en: "level", zh: "水平；等级", phonetic: "/ˈlevl/", pos: "n." },
-      { en: "until", zh: "直到......", phonetic: "/ənˈtɪl/", pos: "conj." },
-      { en: "weigh", zh: "称重量；重", phonetic: "/weɪ/", pos: "v." },
-      { en: "weight", zh: "重量；分量", phonetic: "/weɪt/", pos: "n." },
-      { en: "stamp", zh: "邮票", phonetic: "/stæmp/", pos: "n." },
-      { en: "marry", zh: "结婚", phonetic: "/ˈmæri/", pos: "v." },
-      { en: "act", zh: "行为；行动", phonetic: "/ækt/", pos: "n./v." },
-      { en: "married", zh: "已婚的", phonetic: "/ˈmærid/", pos: "adj." },
-    ]
-  }
+const SUPABASE_URL = "https://nvynnmwpwirnjognvtuw.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52eW5ubXdwd2lybmpvZ252dHV3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ3OTU1NTYsImV4cCI6MjA5MDM3MTU1Nn0.moxCk9T4umF1plxNfvi14tBT3L7B4NJJ4HZG74JJf7g";
+const DEFAULT_USER = "cindy";
+const TABLE_NAME = "user_progress";
+
+// Supabase REST helper (no SDK needed)
+const sbHeaders = {
+  "apikey": SUPABASE_ANON_KEY,
+  "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
+  "Content-Type": "application/json",
+  "Prefer": "return=representation"
 };
 
+async function sbLoad(userName) {
+  try {
+    const res = await fetch(
+      `${SUPABASE_URL}/rest/v1/${TABLE_NAME}?user_name=eq.${encodeURIComponent(userName)}&select=*`,
+      { headers: sbHeaders }
+    );
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const rows = await res.json();
+    return rows.length > 0 ? rows[0] : null;
+  } catch (e) {
+    console.warn("Supabase load failed:", e);
+    return null;
+  }
+}
+
+async function sbSave(userName, data) {
+  try {
+    // upsert: insert or update
+    const body = {
+      user_name: userName,
+      vocab_progress: data.vocabProgress || {},
+      grammar_progress: data.grammarProgress || {},
+      review_schedule: data.reviewSchedule || [],
+      daily_log: data.dailyLog || {},
+      error_progress: data.errorProgress || {},
+      updated_at: new Date().toISOString()
+    };
+    const res = await fetch(
+      `${SUPABASE_URL}/rest/v1/${TABLE_NAME}?on_conflict=user_name`,
+      {
+        method: "POST",
+        headers: { ...sbHeaders, "Prefer": "return=representation,resolution=merge-duplicates" },
+        body: JSON.stringify(body)
+      }
+    );
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return true;
+  } catch (e) {
+    console.warn("Supabase save failed:", e);
+    return false;
+  }
+}
+
+// ============================================================
+// FULL VOCABULARY DATA (all 6 units from textbook)
+// ============================================================
+const VOCAB_DATA = {
+  1: { name: "Everyone is different", words: [
+    { en: "different", zh: "不同的；有区别的", phonetic: "/ˈdɪfrənt/", pos: "adj." },
+    { en: "notice", zh: "注意；通知", phonetic: "/ˈnəʊtɪs/", pos: "v./n." },
+    { en: "swan", zh: "天鹅", phonetic: "/swɒn/", pos: "n." },
+    { en: "partner", zh: "搭档；同伴", phonetic: "/ˈpɑːtnə(r)/", pos: "n." },
+    { en: "slim", zh: "苗条的", phonetic: "/slɪm/", pos: "adj." },
+    { en: "fat", zh: "肥的；胖的", phonetic: "/fæt/", pos: "adj." },
+    { en: "curly", zh: "卷曲状的", phonetic: "/ˈkɜːli/", pos: "adj." },
+    { en: "straight", zh: "直的", phonetic: "/streɪt/", pos: "adj." },
+    { en: "jeans", zh: "牛仔裤", phonetic: "/dʒiːnz/", pos: "n.(pl.)" },
+    { en: "size", zh: "大小；尺码", phonetic: "/saɪz/", pos: "n." },
+    { en: "shape", zh: "形状；外形", phonetic: "/ʃeɪp/", pos: "n." },
+    { en: "skin", zh: "皮肤", phonetic: "/skɪn/", pos: "n." },
+    { en: "special", zh: "特殊的；特别的", phonetic: "/ˈspeʃl/", pos: "adj." },
+    { en: "number", zh: "编号；数字", phonetic: "/ˈnʌmbə(r)/", pos: "n." },
+    { en: "than", zh: "比", phonetic: "/ðæn/", pos: "prep." },
+    { en: "fair", zh: "浅色的；白皙的", phonetic: "/feə(r)/", pos: "adj." },
+    { en: "talent", zh: "天才；天赋", phonetic: "/ˈtælənt/", pos: "n." },
+    { en: "programme", zh: "节目单；计划", phonetic: "/ˈprəʊɡræm/", pos: "n." },
+    { en: "hall", zh: "礼堂；大厅", phonetic: "/hɔːl/", pos: "n." },
+    { en: "butterfly", zh: "蝴蝶", phonetic: "/ˈbʌtəflaɪ/", pos: "n." },
+    { en: "violin", zh: "小提琴", phonetic: "/ˌvaɪəˈlɪn/", pos: "n." },
+    { en: "host", zh: "节目主持人", phonetic: "/həʊst/", pos: "n." },
+    { en: "sound", zh: "听起来；声音", phonetic: "/saʊnd/", pos: "v./n." },
+    { en: "exciting", zh: "令人激动的", phonetic: "/ɪkˈsaɪtɪŋ/", pos: "adj." },
+    { en: "someone", zh: "某人", phonetic: "/ˈsʌmwʌn/", pos: "pron." },
+    { en: "drum", zh: "打鼓；鼓", phonetic: "/drʌm/", pos: "v./n." },
+    { en: "voice", zh: "嗓音", phonetic: "/vɔɪs/", pos: "n." },
+    { en: "person", zh: "人；个人", phonetic: "/ˈpɜːsn/", pos: "n." },
+    { en: "hobby", zh: "业余爱好", phonetic: "/ˈhɒbi/", pos: "n." },
+    { en: "personality", zh: "性格；个性", phonetic: "/ˌpɜːsəˈnæləti/", pos: "n." },
+    { en: "ability", zh: "才能；能力", phonetic: "/əˈbɪləti/", pos: "n." },
+    { en: "accept", zh: "接受；同意", phonetic: "/əkˈsept/", pos: "v." },
+    { en: "wise", zh: "充满智慧的", phonetic: "/waɪz/", pos: "adj." },
+    { en: "without", zh: "没有；缺乏", phonetic: "/wɪˈðaʊt/", pos: "prep." },
+    { en: "doubt", zh: "疑惑；疑问", phonetic: "/daʊt/", pos: "n." },
+    { en: "laugh", zh: "笑；发笑", phonetic: "/lɑːf/", pos: "v." },
+    { en: "smile", zh: "微笑", phonetic: "/smaɪl/", pos: "v." },
+    { en: "feather", zh: "羽毛", phonetic: "/ˈfeðə(r)/", pos: "n." },
+    { en: "future", zh: "将来；未来", phonetic: "/ˈfjuːtʃə(r)/", pos: "n." },
+    { en: "skill", zh: "技巧；技艺", phonetic: "/skɪl/", pos: "n." },
+    { en: "unique", zh: "唯一的", phonetic: "/juˈniːk/", pos: "adj." },
+    { en: "mean", zh: "意思是", phonetic: "/miːn/", pos: "v." },
+    { en: "noticeboard", zh: "布告栏", phonetic: "/ˈnəʊtɪsbɔːd/", pos: "n." },
+  ]},
+  2: { name: "Rules around us", words: [
+    { en: "rule", zh: "规则；规定", phonetic: "/ruːl/", pos: "n." },
+    { en: "underground", zh: "地铁", phonetic: "/ˌʌndəˈɡraʊnd/", pos: "n." },
+    { en: "attention", zh: "注意；注意力", phonetic: "/əˈtenʃn/", pos: "n." },
+    { en: "pay attention to", zh: "注意", phonetic: "", pos: "phrase" },
+    { en: "gate", zh: "大门", phonetic: "/ɡeɪt/", pos: "n." },
+    { en: "lean", zh: "倚靠；倾斜", phonetic: "/liːn/", pos: "v." },
+    { en: "litter", zh: "乱扔垃圾", phonetic: "/ˈlɪtə(r)/", pos: "v." },
+    { en: "station", zh: "车站", phonetic: "/ˈsteɪʃn/", pos: "n." },
+    { en: "announcement", zh: "通告", phonetic: "/əˈnaʊnsmənt/", pos: "n." },
+    { en: "passenger", zh: "乘客", phonetic: "/ˈpæsɪndʒə(r)/", pos: "n." },
+    { en: "rush", zh: "冲；急奔", phonetic: "/rʌʃ/", pos: "v." },
+    { en: "line", zh: "线", phonetic: "/laɪn/", pos: "n." },
+    { en: "seat", zh: "座位", phonetic: "/siːt/", pos: "n." },
+    { en: "smoke", zh: "吸烟", phonetic: "/sməʊk/", pos: "v." },
+    { en: "anyone", zh: "任何人", phonetic: "/ˈeniwʌn/", pos: "pron." },
+    { en: "leave", zh: "离开；留下", phonetic: "/liːv/", pos: "v." },
+    { en: "rubbish", zh: "垃圾", phonetic: "/ˈrʌbɪʃ/", pos: "n." },
+    { en: "broken", zh: "破损的", phonetic: "/ˈbrəʊkən/", pos: "adj." },
+    { en: "container", zh: "容器", phonetic: "/kənˈteɪnə(r)/", pos: "n." },
+    { en: "ready", zh: "准备好的", phonetic: "/ˈredi/", pos: "adj." },
+    { en: "follow", zh: "跟随；遵循", phonetic: "/ˈfɒləʊ/", pos: "v." },
+    { en: "stay", zh: "停留", phonetic: "/steɪ/", pos: "v." },
+    { en: "important", zh: "重要的", phonetic: "/ɪmˈpɔːtənt/", pos: "adj." },
+    { en: "model", zh: "模型", phonetic: "/ˈmɒdl/", pos: "n." },
+    { en: "platform", zh: "站台", phonetic: "/ˈplætfɔːm/", pos: "n." },
+    { en: "behave", zh: "表现；举止", phonetic: "/bɪˈheɪv/", pos: "v." },
+    { en: "importance", zh: "重要性", phonetic: "/ɪmˈpɔːtns/", pos: "n." },
+  ]},
+  3: { name: "Festivals across cultures", words: [
+    { en: "festival", zh: "节日", phonetic: "/ˈfestɪvl/", pos: "n." },
+    { en: "culture", zh: "文化", phonetic: "/ˈkʌltʃə(r)/", pos: "n." },
+    { en: "across", zh: "穿过；横跨", phonetic: "/əˈkrɒs/", pos: "prep." },
+    { en: "lucky", zh: "幸运的", phonetic: "/ˈlʌki/", pos: "adj." },
+    { en: "tradition", zh: "传统", phonetic: "/trəˈdɪʃn/", pos: "n." },
+    { en: "country", zh: "国家", phonetic: "/ˈkʌntri/", pos: "n." },
+    { en: "wealth", zh: "财富", phonetic: "/welθ/", pos: "n." },
+    { en: "hope", zh: "希望", phonetic: "/həʊp/", pos: "v./n." },
+    { en: "midnight", zh: "午夜", phonetic: "/ˈmɪdnaɪt/", pos: "n." },
+    { en: "international", zh: "国际的", phonetic: "/ˌɪntəˈnæʃnəl/", pos: "adj." },
+    { en: "event", zh: "事件；活动", phonetic: "/ɪˈvent/", pos: "n." },
+    { en: "square", zh: "广场", phonetic: "/skweə(r)/", pos: "n." },
+    { en: "theatre", zh: "剧场", phonetic: "/ˈθɪətə(r)/", pos: "n." },
+    { en: "concert", zh: "音乐会", phonetic: "/ˈkɒnsət/", pos: "n." },
+    { en: "firework", zh: "烟花", phonetic: "/ˈfaɪəwɜːk/", pos: "n." },
+    { en: "celebrate", zh: "庆祝", phonetic: "/ˈselɪbreɪt/", pos: "v." },
+    { en: "calendar", zh: "日历", phonetic: "/ˈkælɪndə(r)/", pos: "n." },
+    { en: "traditional", zh: "传统的", phonetic: "/trəˈdɪʃnəl/", pos: "adj." },
+    { en: "harvest", zh: "收获", phonetic: "/ˈhɑːvɪst/", pos: "n." },
+    { en: "experience", zh: "经验；经历", phonetic: "/ɪkˈspɪəriəns/", pos: "n." },
+    { en: "invite", zh: "邀请", phonetic: "/ɪnˈvaɪt/", pos: "v." },
+    { en: "refuse", zh: "拒绝", phonetic: "/rɪˈfjuːz/", pos: "v." },
+    { en: "performance", zh: "表演", phonetic: "/pəˈfɔːməns/", pos: "n." },
+    { en: "information", zh: "信息", phonetic: "/ˌɪnfəˈmeɪʃn/", pos: "n." },
+  ]},
+  4: { name: "Weather and our lives", words: [
+    { en: "airport", zh: "机场", phonetic: "/ˈeəpɔːt/", pos: "n." },
+    { en: "location", zh: "地点", phonetic: "/ləʊˈkeɪʃn/", pos: "n." },
+    { en: "capital", zh: "首都", phonetic: "/ˈkæpɪtl/", pos: "n." },
+    { en: "foggy", zh: "有雾的", phonetic: "/ˈfɒɡi/", pos: "adj." },
+    { en: "temperature", zh: "温度", phonetic: "/ˈtemprətʃə(r)/", pos: "n." },
+    { en: "degree", zh: "度数", phonetic: "/dɪˈɡriː/", pos: "n." },
+    { en: "drop", zh: "下降", phonetic: "/drɒp/", pos: "v." },
+    { en: "dry", zh: "干燥的", phonetic: "/draɪ/", pos: "adj." },
+    { en: "wind", zh: "风", phonetic: "/wɪnd/", pos: "n." },
+    { en: "cloud", zh: "云", phonetic: "/klaʊd/", pos: "n." },
+    { en: "heatwave", zh: "热浪", phonetic: "/ˈhiːtweɪv/", pos: "n." },
+    { en: "several", zh: "几个", phonetic: "/ˈsevrəl/", pos: "det." },
+    { en: "record", zh: "记录", phonetic: "/ˈrekɔːd/", pos: "n./v." },
+  ]},
+  5: { name: "Green neighbourhood", words: [
+    { en: "neighbourhood", zh: "社区", phonetic: "/ˈneɪbəhʊd/", pos: "n." },
+    { en: "plastic", zh: "塑料的", phonetic: "/ˈplæstɪk/", pos: "adj." },
+    { en: "waste", zh: "浪费；废物", phonetic: "/weɪst/", pos: "v./n." },
+    { en: "electricity", zh: "电", phonetic: "/ɪˌlekˈtrɪsəti/", pos: "n." },
+    { en: "save", zh: "节省", phonetic: "/seɪv/", pos: "v." },
+    { en: "huge", zh: "巨大的", phonetic: "/hjuːdʒ/", pos: "adj." },
+    { en: "government", zh: "政府", phonetic: "/ˈɡʌvənmənt/", pos: "n." },
+    { en: "encourage", zh: "鼓励", phonetic: "/ɪnˈkʌrɪdʒ/", pos: "v." },
+    { en: "public", zh: "公共的", phonetic: "/ˈpʌblɪk/", pos: "adj." },
+    { en: "transport", zh: "交通", phonetic: "/ˈtrænspɔːt/", pos: "n." },
+    { en: "environmental", zh: "环境的", phonetic: "/ɪnˌvaɪrənˈmentl/", pos: "adj." },
+    { en: "electric", zh: "电动的", phonetic: "/ɪˈlektrɪk/", pos: "adj." },
+    { en: "energy", zh: "能量", phonetic: "/ˈenədʒi/", pos: "n." },
+    { en: "reduce", zh: "减少", phonetic: "/rɪˈdjuːs/", pos: "v." },
+    { en: "recycle", zh: "回收利用", phonetic: "/ˌriːˈsaɪkl/", pos: "v." },
+    { en: "repair", zh: "修理", phonetic: "/rɪˈpeə(r)/", pos: "v." },
+    { en: "however", zh: "然而", phonetic: "/haʊˈevə(r)/", pos: "adv." },
+    { en: "increase", zh: "增加", phonetic: "/ɪnˈkriːs/", pos: "v." },
+    { en: "cause", zh: "导致", phonetic: "/kɔːz/", pos: "v." },
+  ]},
+  6: { name: "Famous people in history", words: [
+    { en: "soldier", zh: "军人", phonetic: "/ˈsəʊldʒə(r)/", pos: "n." },
+    { en: "admire", zh: "钦佩", phonetic: "/ədˈmaɪə(r)/", pos: "v." },
+    { en: "poem", zh: "诗歌", phonetic: "/ˈpəʊɪm/", pos: "n." },
+    { en: "danger", zh: "危险", phonetic: "/ˈdeɪndʒə(r)/", pos: "n." },
+    { en: "smart", zh: "聪明的", phonetic: "/smɑːt/", pos: "adj." },
+    { en: "discover", zh: "发现", phonetic: "/dɪsˈkʌvə(r)/", pos: "v." },
+    { en: "invent", zh: "发明", phonetic: "/ɪnˈvent/", pos: "v." },
+    { en: "publish", zh: "出版", phonetic: "/ˈpʌblɪʃ/", pos: "v." },
+    { en: "real", zh: "真正的", phonetic: "/rɪəl/", pos: "adj." },
+    { en: "inventor", zh: "发明家", phonetic: "/ɪnˈventə(r)/", pos: "n." },
+    { en: "power", zh: "电力；力量", phonetic: "/ˈpaʊə(r)/", pos: "n." },
+    { en: "successful", zh: "成功的", phonetic: "/səkˈsesfl/", pos: "adj." },
+    { en: "invention", zh: "发明", phonetic: "/ɪnˈvenʃn/", pos: "n." },
+    { en: "medicine", zh: "医学；药", phonetic: "/ˈmedsn/", pos: "n." },
+    { en: "spend", zh: "花费", phonetic: "/spend/", pos: "v." },
+    { en: "create", zh: "创造", phonetic: "/kriˈeɪt/", pos: "v." },
+    { en: "character", zh: "角色", phonetic: "/ˈkærəktə(r)/", pos: "n." },
+    { en: "stage", zh: "舞台", phonetic: "/steɪdʒ/", pos: "n." },
+    { en: "million", zh: "百万", phonetic: "/ˈmɪljən/", pos: "num." },
+    { en: "level", zh: "水平", phonetic: "/ˈlevl/", pos: "n." },
+    { en: "marry", zh: "结婚", phonetic: "/ˈmæri/", pos: "v." },
+    { en: "stamp", zh: "邮票", phonetic: "/stæmp/", pos: "n." },
+  ]}
+};
+
+// ============================================================
+// ERROR BOOK DATA — extracted from uploaded exercise photos
+// ============================================================
+const ERROR_BOOK_DATA = [
+  // === From Image 3 (p.13) — Unit 2 vocabulary & translation ===
+  {
+    id: "err_01", unit: 2, type: "spelling", difficulty: "基础",
+    category: "单词拼写",
+    question: "翻译短语：乘客",
+    wrongAnswer: "passenager",
+    correctAnswer: "passenger",
+    explanation: "passenger 只有一个 'a'，不要多写。记忆方法：pass + eng + er。注意中间是 -enge- 不是 -enage-。",
+    relatedWords: ["passenger"],
+    practiceType: "spell"
+  },
+  {
+    id: "err_02", unit: 2, type: "spelling", difficulty: "基础",
+    category: "单词拼写",
+    question: "翻译短语：通告；广播",
+    wrongAnswer: "announement",
+    correctAnswer: "announcement",
+    explanation: "announcement 有两个 n，中间是 -nounce-。记忆：announce（宣布）+ ment（名词后缀）。",
+    relatedWords: ["announcement"],
+    practiceType: "spell"
+  },
+  {
+    id: "err_03", unit: 2, type: "spelling", difficulty: "基础",
+    category: "单词拼写",
+    question: "翻译短语：站台",
+    wrongAnswer: "platfrom",
+    correctAnswer: "platform",
+    explanation: "platform 注意字母顺序是 -form 不是 -from。记忆：plat（平的）+ form（形式）。",
+    relatedWords: ["platform"],
+    practiceType: "spell"
+  },
+  {
+    id: "err_04", unit: 2, type: "spelling", difficulty: "中等",
+    category: "单词拼写",
+    question: "用所给单词的正确形式填空：important → 名词形式",
+    wrongAnswer: "importence",
+    correctAnswer: "importance",
+    explanation: "important 的名词形式是 importance，注意后缀是 -ance 不是 -ence。",
+    relatedWords: ["important", "importance"],
+    practiceType: "spell"
+  },
+  {
+    id: "err_05", unit: 2, type: "spelling", difficulty: "基础",
+    category: "单词拼写",
+    question: "用所给单词的正确形式填空：容器",
+    wrongAnswer: "contaner",
+    correctAnswer: "container",
+    explanation: "container = contain（包含）+ er。注意中间是 -tain- 不是 -tan-。",
+    relatedWords: ["container"],
+    practiceType: "spell"
+  },
+  {
+    id: "err_06", unit: 2, type: "translation", difficulty: "中等",
+    category: "中译英",
+    question: "不要在这里右转。",
+    wrongAnswer: "Don't turn right here（结构有误）",
+    correctAnswer: "Don't turn right here.",
+    explanation: "这句话结构是：Don't + 动词原形 + 其他。turn right = 右转。这是否定祈使句。注意 turn 后面直接跟 right（副词），不需要加 to。",
+    relatedWords: ["turn"],
+    practiceType: "translate"
+  },
+  {
+    id: "err_07", unit: 2, type: "translation", difficulty: "中等",
+    category: "中译英",
+    question: "今天发生什么事了？",
+    wrongAnswer: "What's happen today?",
+    correctAnswer: "What's happening today?",
+    explanation: "What's happening = What is happening，现在进行时。What's 后面要跟 -ing 形式。不能写成 What's happen。",
+    relatedWords: [],
+    practiceType: "translate"
+  },
+  {
+    id: "err_08", unit: 2, type: "translation", difficulty: "中等",
+    category: "中译英",
+    question: "这个标志是什么意思？",
+    wrongAnswer: "What does this sign mean?（mean 用法不清）",
+    correctAnswer: "What does this sign mean?",
+    explanation: "用一般现在时提问：What does + 主语 + 动词原形？注意 mean 是动词原形，不能加 s（因为前面有 does）。",
+    relatedWords: ["mean"],
+    practiceType: "translate"
+  },
+  {
+    id: "err_09", unit: 2, type: "grammar", difficulty: "中等",
+    category: "语法选择",
+    question: "Students should arrive ___ school on time every weekday.",
+    wrongAnswer: "on",
+    correctAnswer: "at",
+    explanation: "arrive at + 小地点（school, station）。arrive in + 大地点（city, country）。arrive 后面不用 to！",
+    relatedWords: [],
+    practiceType: "choice"
+  },
+  {
+    id: "err_10", unit: 2, type: "grammar", difficulty: "中等",
+    category: "语法选择",
+    question: "Someone took Bob's food ___ he was not looking.",
+    wrongAnswer: "and",
+    correctAnswer: "when",
+    explanation: "when = 当......的时候。这里表示'当他没在看的时候'，需要用 when 引导时间状语从句。",
+    relatedWords: [],
+    practiceType: "choice"
+  },
+  {
+    id: "err_11", unit: 2, type: "grammar", difficulty: "中等",
+    category: "语法选择",
+    question: "Rules help us behave ___ and stay safe.",
+    wrongAnswer: "good",
+    correctAnswer: "well",
+    explanation: "behave well = 表现好。这里需要副词 well 来修饰动词 behave，不能用形容词 good。good 修饰名词，well 修饰动词。",
+    relatedWords: ["behave"],
+    practiceType: "choice"
+  },
+  {
+    id: "err_12", unit: 2, type: "vocabulary", difficulty: "中等",
+    category: "词汇理解",
+    question: "动词正确形式：His parents took ___ (lean) him when he has a fever.",
+    wrongAnswer: "leaning",
+    correctAnswer: "leaning（语境理解错误，原题为 care of）",
+    explanation: "take care of = 照顾。注意区分 lean（倚靠）和其他词的用法。",
+    relatedWords: ["lean"],
+    practiceType: "fill"
+  },
+  // === From Image 2 (p.14) — Sentence rewriting ===
+  {
+    id: "err_13", unit: 2, type: "grammar", difficulty: "较难",
+    category: "句型转换",
+    question: "We must stand in line.（改为祈使句，保持句意不变）",
+    wrongAnswer: "must stand in line（没有去掉 must 和主语）",
+    correctAnswer: "Stand in line.",
+    explanation: "祈使句 = 去掉主语和情态动词，直接用动词原形开头。We must stand → Stand。祈使句本身就含有'必须'的语气。",
+    relatedWords: [],
+    practiceType: "rewrite"
+  },
+  {
+    id: "err_14", unit: 2, type: "grammar", difficulty: "较难",
+    category: "句型转换",
+    question: "It's time for school.（改写句子，保持句意不变）",
+    wrongAnswer: "It's time go to school",
+    correctAnswer: "It's time to go to school.",
+    explanation: "It's time for + 名词 = It's time to + 动词原形。for school → to go to school。注意 to 不能省略。",
+    relatedWords: [],
+    practiceType: "rewrite"
+  },
+  {
+    id: "err_15", unit: 2, type: "grammar", difficulty: "较难",
+    category: "句型转换",
+    question: "What's happening today?（改写句子，保持句意不变）",
+    wrongAnswer: "（未答出）",
+    correctAnswer: "What is going on today?",
+    explanation: "What's happening = What is going on，意思都是'发生了什么事'。going on 是固定搭配。",
+    relatedWords: [],
+    practiceType: "rewrite"
+  },
+  {
+    id: "err_16", unit: 2, type: "grammar", difficulty: "中等",
+    category: "语法选择",
+    question: "___ I'm afraid you ___ help. — In fact, I watch TV? ___ You must do your homework first.",
+    wrongAnswer: "A (May; can't) → 选了 needn't",
+    correctAnswer: "A. May; can't",
+    explanation: "May I...? 表示请求许可。回答拒绝时用 can't / mustn't。needn't = 不需要，语义不对。",
+    relatedWords: [],
+    practiceType: "choice"
+  },
+  {
+    id: "err_17", unit: 2, type: "grammar", difficulty: "中等",
+    category: "语法选择",
+    question: "___ of the students like the new teacher. (both/neither/all/none)",
+    wrongAnswer: "both",
+    correctAnswer: "需要看上下文（both 用于两个人，all 用于三个以上）",
+    explanation: "both = 两者都；all = 三者以上都；neither = 两者都不；none = 三者以上都不。注意人数区分。",
+    relatedWords: [],
+    practiceType: "choice"
+  },
+  // === From Image 1 (p.16-17) — Reading & Writing ===
+  {
+    id: "err_18", unit: 4, type: "reading", difficulty: "较难",
+    category: "阅读回答",
+    question: "What is happening to the Earth?",
+    wrongAnswer: "is getting warmer（不完整）",
+    correctAnswer: "The Earth is getting warmer.",
+    explanation: "回答问题必须用完整句子！把问题的词变成陈述句开头：What is happening to the Earth? → The Earth is getting warmer. 不能只写部分内容。",
+    relatedWords: [],
+    practiceType: "reading"
+  },
+  {
+    id: "err_19", unit: 5, type: "grammar", difficulty: "中等",
+    category: "写作纠错",
+    question: "如果城市越来越大，最终会怎样？我们应该怎么做？",
+    wrongAnswer: "We should have more tree in our parks and roofs white",
+    correctAnswer: "We should plant more trees in our parks and paint roofs white.",
+    explanation: "三个错误：① tree 是可数名词，复数要加 s → trees；② 'have more tree' 表达不清，应该用 plant（种植）；③ roofs white 前面缺少动词 paint（涂）。",
+    relatedWords: [],
+    practiceType: "rewrite"
+  },
+  {
+    id: "err_20", unit: 2, type: "vocabulary", difficulty: "基础",
+    category: "词汇理解",
+    question: "Fill in: It is very ___ to pay attention to safety.",
+    wrongAnswer: "danger",
+    correctAnswer: "important / dangerous（根据语境）",
+    explanation: "danger 是名词（危险），不能直接放在 be 动词后面。如果要表达'危险的'，用形容词 dangerous。如果要表达'重要的'，用 important。注意名词和形容词的区别。",
+    relatedWords: ["danger", "dangerous", "important"],
+    practiceType: "fill"
+  },
+  {
+    id: "err_21", unit: 2, type: "grammar", difficulty: "中等",
+    category: "语法选择",
+    question: "Remember: ___ talking loudly in the library.",
+    wrongAnswer: "Not（大写开头，但用法错误）",
+    correctAnswer: "No",
+    explanation: "No + 动名词 = 禁止做某事。如 No smoking / No talking。这是告示牌的固定用法。Don't + 动词原形 也可以表示禁止，但这里是 No + -ing。",
+    relatedWords: [],
+    practiceType: "choice"
+  },
+  {
+    id: "err_22", unit: 2, type: "vocabulary", difficulty: "中等",
+    category: "完形填空",
+    question: "Lily felt ___（沮丧的）because Muffin wouldn't sit still.",
+    wrongAnswer: "favourite",
+    correctAnswer: "frustrated",
+    explanation: "frustrated = 沮丧的、受挫的。favourite = 最喜欢的。根据语境'Muffin 不肯坐好'，Lily 应该感到沮丧，不是最喜欢。注意根据上下文理解情感词。",
+    relatedWords: ["frustrated", "favourite"],
+    practiceType: "fill"
+  },
+  {
+    id: "err_23", unit: 2, type: "vocabulary", difficulty: "中等",
+    category: "完形填空",
+    question: "But Muffin was too busy having fun... he was in a different ___ .",
+    wrongAnswer: "looked",
+    correctAnswer: "spot",
+    explanation: "spot = 地点、位置。in a different spot = 在不同的位置。looked 是动词，不能做名词用。",
+    relatedWords: ["spot"],
+    practiceType: "fill"
+  },
+];
+
+// Grammar data
 const GRAMMAR_DATA = [
   {
-    id: "imperative",
-    title: "祈使句 The Imperative",
-    unit: 2,
+    id: "imperative", title: "祈使句 The Imperative", unit: 2,
     explanation: "祈使句用来表示命令、请求、建议。动词原形开头，省略主语 you。",
     rules: [
       { rule: "肯定祈使句：动词原形开头", example: "Follow the rules.", translation: "遵守规则。" },
       { rule: "否定祈使句：Don't + 动词原形", example: "Don't run on the platform.", translation: "不要在站台上跑。" },
       { rule: "Let's + 动词原形（建议）", example: "Let's fix it together.", translation: "我们一起修好它吧。" },
-      { rule: "Be + 形容词", example: "Be careful!", translation: "小心！" },
+      { rule: "No + 动名词（告示禁止）", example: "No smoking. / No talking.", translation: "禁止吸烟。/ 禁止讲话。" },
     ],
     exercises: [
       { q: "___ (not play) on the road. It's dangerous.", a: "Don't play", hint: "否定祈使句" },
@@ -312,18 +517,16 @@ const GRAMMAR_DATA = [
       { q: "___ (not lean) against the door.", a: "Don't lean", hint: "否定祈使句" },
       { q: "___ (be) quiet in the library.", a: "Be", hint: "Be + 形容词" },
       { q: "___ (stand) behind the yellow line.", a: "Stand", hint: "肯定祈使句" },
-      { q: "___ (not eat) or drink on the train.", a: "Don't eat", hint: "否定祈使句" },
-      { q: "Let's ___ (go) to the park.", a: "go", hint: "Let's + 动词原形" },
+      { q: "We must stand in line. (改为祈使句)", a: "Stand in line.", hint: "去掉主语和情态动词" },
+      { q: "___ talking in class! (告示禁止)", a: "No", hint: "No + 动名词" },
     ]
   },
   {
-    id: "will_future",
-    title: "一般将来时 will",
-    unit: 4,
+    id: "will_future", title: "一般将来时 will", unit: 4,
     explanation: "用 will + 动词原形表示将来会发生的事情、预测或意愿。",
     rules: [
       { rule: "肯定句：主语 + will + 动词原形", example: "People will use flying cars.", translation: "人们将使用飞行汽车。" },
-      { rule: "否定句：主语 + will not (won't) + 动词原形", example: "It won't rain tomorrow.", translation: "明天不会下雨。" },
+      { rule: "否定句：主语 + won't + 动词原形", example: "It won't rain tomorrow.", translation: "明天不会下雨。" },
       { rule: "疑问句：Will + 主语 + 动词原形?", example: "Will you come to the party?", translation: "你会来参加聚会吗？" },
       { rule: "There will be + 名词", example: "There will be more robots.", translation: "将会有更多机器人。" },
     ],
@@ -331,1240 +534,872 @@ const GRAMMAR_DATA = [
       { q: "People ___ (use) robots in the future.", a: "will use", hint: "will + 动词原形" },
       { q: "There ___ (be) more space for people.", a: "will be", hint: "There will be" },
       { q: "Traffic ___ (not be) a problem.", a: "won't be", hint: "否定句 won't" },
-      { q: "___ robots ___ (take) over people's jobs?", a: "Will ... take", hint: "疑问句 Will...?" },
-      { q: "It ___ (rain) tomorrow.", a: "will rain", hint: "will + 动词原形" },
-      { q: "She ___ (not come) to school tomorrow.", a: "won't come", hint: "否定句" },
-      { q: "We ___ (have) a test next Monday.", a: "will have", hint: "将来的事情" },
-      { q: "There ___ (be) a concert tonight.", a: "will be", hint: "There will be" },
+      { q: "___ robots ___ (take) people's jobs?", a: "Will ... take", hint: "疑问句" },
+      { q: "The Earth ___ (get) warmer and warmer.", a: "will get", hint: "will + 动词原形" },
+      { q: "Cities ___ (grow) faster and faster.", a: "will grow", hint: "will + 动词原形" },
     ]
   },
   {
-    id: "comparative",
-    title: "比较级和最高级",
-    unit: 1,
+    id: "comparative", title: "比较级和最高级", unit: 1,
     explanation: "两者比较用比较级（+ than），三者以上比较用最高级（the + 最高级）。",
     rules: [
       { rule: "单音节词 + er/est", example: "tall → taller → tallest", translation: "高 → 更高 → 最高" },
       { rule: "多音节词用 more/most", example: "beautiful → more beautiful", translation: "美丽 → 更美丽" },
       { rule: "不规则变化", example: "good → better → best", translation: "好 → 更好 → 最好" },
-      { rule: "形容词 vs 副词", example: "loud(形容词) → loudly(副词)", translation: "大声的 → 大声地" },
+      { rule: "形容词 vs 副词", example: "loud(adj.) → loudly(adv.)", translation: "大声的 → 大声地" },
     ],
     exercises: [
       { q: "She is ___ (tall) than her sister.", a: "taller", hint: "单音节 + er" },
-      { q: "This is the ___ (good) book I have ever read.", a: "best", hint: "不规则：good→better→best" },
-      { q: "He runs ___ (fast) than me.", a: "faster", hint: "单音节 + er" },
-      { q: "Math is ___ (difficult) than English.", a: "more difficult", hint: "多音节用 more" },
-      { q: "She sings ___ (beautiful) than anyone else.", a: "more beautifully", hint: "副词用 more + ly" },
-      { q: "Today is the ___ (hot) day of the year.", a: "hottest", hint: "双写 + est" },
-      { q: "This problem is ___ (bad) than that one.", a: "worse", hint: "不规则：bad→worse→worst" },
-      { q: "He played the drums ___ (loud) than others.", a: "more loudly", hint: "副词用 more loudly" },
+      { q: "This is the ___ (good) book.", a: "best", hint: "不规则变化" },
+      { q: "She sings more ___ (beautiful) than anyone.", a: "beautifully", hint: "副词用 -ly" },
+      { q: "He played the drums ___ (loud) than others.", a: "more loudly", hint: "副词比较级" },
+      { q: "Today is ___ (bad) than yesterday.", a: "worse", hint: "bad→worse→worst" },
+      { q: "Rules help us behave ___ (good).", a: "well", hint: "修饰动词用副词 well" },
     ]
   },
   {
-    id: "modal_verbs",
-    title: "情态动词 Modal Verbs",
-    unit: 5,
-    explanation: "情态动词后面跟动词原形，没有人称变化。表示能力、许可、义务、建议等。",
+    id: "modal_verbs", title: "情态动词 Modal Verbs", unit: 5,
+    explanation: "情态动词后面跟动词原形，没有人称变化。",
     rules: [
-      { rule: "can：表示能力或许可", example: "I can swim.", translation: "我会游泳。" },
-      { rule: "should：表示建议", example: "You should study harder.", translation: "你应该更努力学习。" },
-      { rule: "must：表示必须/义务", example: "We must follow the rules.", translation: "我们必须遵守规则。" },
-      { rule: "may：表示许可或可能", example: "May I come in?", translation: "我可以进来吗？" },
+      { rule: "can：能力或许可", example: "I can swim.", translation: "我会游泳。" },
+      { rule: "should：建议", example: "You should study harder.", translation: "你应该更努力。" },
+      { rule: "must：必须", example: "We must follow the rules.", translation: "我们必须遵守规则。" },
+      { rule: "may：许可/可能", example: "May I come in?", translation: "我可以进来吗？" },
+      { rule: "needn't：不需要", example: "You needn't worry.", translation: "你不需要担心。" },
     ],
     exercises: [
-      { q: "We ___ (must/follow) the school rules.", a: "must follow", hint: "情态动词 + 动词原形" },
-      { q: "You ___ (should/not/waste) water.", a: "should not waste", hint: "should not + 动词原形" },
-      { q: "___ I (may/use) your pen?", a: "May I use", hint: "May I + 动词原形" },
-      { q: "She ___ (can/speak) English well.", a: "can speak", hint: "can + 动词原形" },
-      { q: "We ___ (should/save) energy.", a: "should save", hint: "建议用 should" },
-      { q: "You ___ (must/not/smoke) here.", a: "must not smoke", hint: "must not + 动词原形" },
-      { q: "He ___ (can/play) the violin.", a: "can play", hint: "能力用 can" },
-      { q: "Students ___ (should/be) polite.", a: "should be", hint: "should + be" },
+      { q: "We ___ follow the school rules.", a: "must", hint: "表示必须" },
+      { q: "You ___ waste water.", a: "shouldn't", hint: "表示不应该" },
+      { q: "___ I use your pen? — Sorry, you ___.", a: "May ... can't", hint: "请求许可与拒绝" },
+      { q: "Students ___ arrive at school on time.", a: "should", hint: "建议" },
+      { q: "You ___ finish it today. Tomorrow is OK.", a: "needn't", hint: "不需要" },
+      { q: "We should plant more ___ (tree).", a: "trees", hint: "可数名词复数" },
     ]
   },
   {
-    id: "past_simple",
-    title: "一般过去时 Past Simple",
-    unit: 6,
-    explanation: "表示过去发生的动作或状态。动词变过去式。",
+    id: "past_simple", title: "一般过去时 Past Simple", unit: 6,
+    explanation: "表示过去发生的动作或状态。",
     rules: [
-      { rule: "规则变化：+ ed", example: "play → played, live → lived", translation: "玩→玩过, 住→住过" },
-      { rule: "不规则变化需要记忆", example: "go → went, have → had", translation: "去→去过, 有→有过" },
-      { rule: "否定句：didn't + 动词原形", example: "He didn't go to school.", translation: "他没有去上学。" },
-      { rule: "疑问句：Did + 主语 + 动词原形?", example: "Did you see the film?", translation: "你看了那部电影吗？" },
+      { rule: "规则变化：+ ed", example: "play → played", translation: "玩→玩过" },
+      { rule: "不规则变化", example: "go → went, have → had", translation: "去→去过" },
+      { rule: "否定句：didn't + 动词原形", example: "He didn't go.", translation: "他没有去。" },
+      { rule: "疑问句：Did + 主语 + 动词原形?", example: "Did you see it?", translation: "你看到了吗？" },
     ],
     exercises: [
       { q: "She ___ (go) to the library yesterday.", a: "went", hint: "go 的过去式" },
       { q: "They ___ (not play) football last Sunday.", a: "didn't play", hint: "didn't + 原形" },
-      { q: "___ you ___ (see) the new film?", a: "Did ... see", hint: "Did + 主语 + 原形" },
-      { q: "He ___ (invent) the light bulb.", a: "invented", hint: "规则变化 + ed" },
-      { q: "She ___ (write) a beautiful poem.", a: "wrote", hint: "write 的过去式" },
-      { q: "We ___ (have) a great time yesterday.", a: "had", hint: "have 的过去式" },
+      { q: "He ___ (invent) the light bulb.", a: "invented", hint: "规则变化" },
+      { q: "She ___ (write) a beautiful poem.", a: "wrote", hint: "write→wrote" },
       { q: "He ___ (not come) to the party.", a: "didn't come", hint: "didn't + 原形" },
-      { q: "They ___ (create) many inventions.", a: "created", hint: "规则变化 + d" },
+      { q: "Magellan ___ (be) from Portugal.", a: "was", hint: "be→was/were" },
     ]
   }
 ];
 
+// Reading data
 const READING_DATA = [
   {
     id: 1, title: "Rules on the Underground", unit: 2, difficulty: "基础",
-    text: "When we take the underground, we should follow some rules. First, we must wait behind the yellow line on the platform. Don't rush to the train. We should let people get off first, and then we get on. Inside the train, we should not lean against the doors. We must not eat or throw rubbish on the floor. If we see an old person standing nearby, we should offer our seat to them. Everyone should follow the rules to make the journey pleasant for all.",
+    text: "When we take the underground, we should follow some rules. First, we must wait behind the yellow line on the platform. Don't rush to the train. We should let people get off first, and then we get on. Inside the train, we should not lean against the doors. We must not eat or throw rubbish on the floor. If we see an old person standing nearby, we should offer our seat to them. Being a polite passenger makes the journey pleasant for everyone.",
     questions: [
       { q: "Where should we wait on the platform?", a: "We should wait behind the yellow line on the platform." },
       { q: "What should we do when the train arrives?", a: "We should let people get off first, and then we get on." },
-      { q: "Why should we follow the rules?", a: "We should follow the rules to make the journey pleasant for all." },
+      { q: "What is the main idea of the passage?", a: "We should follow the rules to make the journey pleasant for everyone." },
     ]
   },
   {
-    id: 2, title: "Spring Festival Foods", unit: 3, difficulty: "基础",
-    text: "Spring Festival is the most important festival in China. People celebrate it with special foods. Dumplings are popular in northern China. They look like gold coins, so people believe they bring wealth. Spring rolls are crispy and delicious. Fish is always on the table because the Chinese word for fish sounds like the word for 'extra', meaning people hope to have extra money in the new year. Families get together and enjoy a big meal on New Year's Eve.",
+    id: 2, title: "The Earth is Getting Warmer", unit: 4, difficulty: "中等",
+    text: "For many years scientists have said that the Earth is getting warmer. Now they have found something new — cities are getting warmer even faster. In the southern US, summers are getting very hot. More housing and new roads are built in city centres. As people become richer, they buy more cars. New roads are needed and new parking lots are built. Every year more farming land is used for factories or offices. It is not easy to change the situation. City planners say that we should plant more trees in our parks on both sides of streets. Trees make the temperature lower. Also, we should paint our roofs white. By doing this, they won't become too hot.",
     questions: [
-      { q: "Why do people eat dumplings during Spring Festival?", a: "Because dumplings look like gold coins, and people believe they bring wealth." },
-      { q: "Why is fish always on the table?", a: "Because the Chinese word for fish sounds like 'extra', meaning people hope to have extra money." },
-      { q: "When do families enjoy a big meal together?", a: "Families enjoy a big meal together on New Year's Eve." },
+      { q: "What is happening to the Earth?", a: "The Earth is getting warmer." },
+      { q: "According to the passage, what should we do to cool the cities?", a: "We should plant more trees in our parks and on both sides of streets, and paint our roofs white." },
+      { q: "Why are cities getting warmer faster?", a: "Because more housing, roads and parking lots are built, and more farming land is used for factories." },
     ]
   },
   {
-    id: 3, title: "Saving Energy at Home", unit: 5, difficulty: "中等",
-    text: "We can do many things to save energy at home. First, we should turn off the lights when we leave a room. We should not waste water. Turn off the tap when brushing teeth. We can recycle paper, plastic bottles and old clothes. Using public transport is better than driving a car because it reduces pollution. The government encourages people to use electric cars and build low-energy buildings. If everyone does a little, we can make a huge difference to our environment.",
+    id: 3, title: "Saving Energy at Home", unit: 5, difficulty: "基础",
+    text: "We can do many things to save energy at home. First, we should turn off the lights when we leave a room. We should not waste water — turn off the tap when brushing teeth. We can recycle paper, plastic bottles and old clothes. Using public transport is better than driving because it reduces pollution. The government encourages people to use electric cars. If everyone does a little, we can make a huge difference.",
     questions: [
       { q: "What should we do when we leave a room?", a: "We should turn off the lights when we leave a room." },
       { q: "Why is using public transport better than driving?", a: "Because it reduces pollution." },
-      { q: "What does the government encourage people to do?", a: "The government encourages people to use electric cars and build low-energy buildings." },
-    ]
-  },
-  {
-    id: 4, title: "Thomas Edison", unit: 6, difficulty: "中等",
-    text: "Thomas Edison was one of the greatest inventors in history. He was born in 1847 in America. As a child, he was very curious about everything. He invented the light bulb, which changed the world. Before his invention, people used candles and oil lamps. Edison also built the first power station to provide electricity to homes and businesses. He spent his whole life inventing things. He had over 1,000 inventions! Edison once said, 'I have not failed. I have just found 10,000 ways that won't work.' He died in 1931, but his inventions still help millions of people today.",
-    questions: [
-      { q: "When was Thomas Edison born?", a: "Thomas Edison was born in 1847." },
-      { q: "What did people use before the light bulb?", a: "Before the light bulb, people used candles and oil lamps." },
-      { q: "How many inventions did Edison have?", a: "Edison had over 1,000 inventions." },
-      { q: "What is the main idea of the passage?", a: "Thomas Edison was a great inventor who changed the world with his inventions like the light bulb." },
+      { q: "What does the government encourage people to do?", a: "The government encourages people to use electric cars." },
     ]
   },
 ];
 
-const EBBINGHAUS_INTERVALS = [1, 2, 4, 7, 15, 30];
+// Ebbinghaus intervals
+const EBB_INTERVALS = [1, 2, 4, 7, 15, 30];
 
 // ============================================================
-// SUPABASE CLOUD STORAGE
+// MAIN APP
 // ============================================================
-const SUPABASE_URL = 'https://nvynnmwpwirnjognvtuw.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im52eW5ubXdwd2lybmpvZ252dHV3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ3OTU1NTYsImV4cCI6MjA5MDM3MTU1Nn0.moxCk9T4umF1plxNfvi14tBT3L7B4NJJ4HZG74JJf7g';
-
-let supabase = null;
-let currentCloudUser = null;
-let cloudWritePending = false;
-let cloudWriteTimer = null;
-
-async function waitForSupabase(maxWaitMs = 5000) {
-  if (window.supabase) return true;
-  const start = Date.now();
-  while (!window.supabase && Date.now() - start < maxWaitMs) {
-    await new Promise(r => setTimeout(r, 100));
-  }
-  return !!window.supabase;
-}
-
-async function initSupabase() {
-  if (!supabase) {
-    if (!window.supabase) {
-      console.log('[Cloud] Waiting for Supabase SDK to load...');
-      const available = await waitForSupabase();
-      if (!available) {
-        console.error('[Cloud] FAILED: Supabase SDK not loaded (cdn might be blocked)');
-        return null;
-      }
-    }
-    supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    console.log('[Cloud] Supabase client initialized');
-  }
-  return supabase;
-}
-
-async function loadFromCloud(userName) {
-  if (!userName) { console.log('[Cloud] No user, skip load'); return null; }
-  try {
-    const sb = await initSupabase();
-    if (!sb) { console.log('[Cloud] Load skipped: SDK unavailable'); return null; }
-    console.log('[Cloud] Loading from cloud:', userName);
-    const { data, error } = await sb
-      .from('user_progress')
-      .select('*')
-      .eq('user_name', userName)
-      .single();
-    if (error || !data) { console.log('[Cloud] Load: no data found'); return null; }
-    console.log('[Cloud] Load SUCCESS:', Object.keys(data.vocab_progress || {}));
-    return data;
-  } catch (e) { console.error('[Cloud] Load FAILED:', e.message); return null; }
-}
-
-async function saveToCloud(userName, progress) {
-  if (!userName) { console.log('[Cloud] No user, skip save'); return; }
-  try {
-    const sb = await initSupabase();
-    if (!sb) { console.log('[Cloud] Save skipped: SDK unavailable'); return; }
-    console.log('[Cloud] Saving to cloud:', userName, Object.keys(progress.vocabProgress || {}));
-    await sb.from('user_progress').upsert({
-      user_name: userName,
-      vocab_progress: progress.vocabProgress || {},
-      grammar_progress: progress.grammarProgress || {},
-      review_schedule: progress.reviewSchedule || [],
-      daily_log: progress.dailyLog || {},
-      updated_at: new Date().toISOString()
-    });
-    console.log('[Cloud] Save SUCCESS');
-  } catch (e) { console.error('[Cloud] Save FAILED:', e.message); /* silent fail */ }
-}
-
-async function deleteCloudUser(userName) {
-  if (!userName) return;
-  try {
-    const sb = await initSupabase();
-    if (!sb) return;
-    await sb.from('user_progress').delete().eq('user_name', userName);
-  } catch { /* silent fail */ }
-}
-
-// ============================================================
-// STORAGE (local + cloud sync)
-// ============================================================
-const Storage = {
-  _cache: {},
-  _localLoaded: false,
-
-  async _ensureLocal() {
-    if (this._localLoaded) return;
-    try {
-      this._cache.vocabProgress = JSON.parse(localStorage.getItem('vocabProgress') || '{}');
-      this._cache.grammarProgress = JSON.parse(localStorage.getItem('grammarProgress') || '{}');
-      this._cache.reviewSchedule = JSON.parse(localStorage.getItem('reviewSchedule') || '[]');
-      this._cache.dailyLog = JSON.parse(localStorage.getItem('dailyLog') || '{}');
-    } catch {}
-    this._localLoaded = true;
-  },
-
-  get(key) {
-    return new Promise(async (resolve) => {
-      await this._ensureLocal();
-      const val = this._cache[key] !== undefined ? JSON.stringify(this._cache[key]) : localStorage.getItem(key);
-      resolve(val ? { value: val } : null);
-    });
-  },
-
-  set(key, value) {
-    return new Promise(async (resolve) => {
-      try {
-        localStorage.setItem(key, value);
-        // update cache
-        try { this._cache[key] = JSON.parse(value); } catch { this._cache[key] = value; }
-        // debounce cloud write
-        if (cloudWriteTimer) clearTimeout(cloudWriteTimer);
-        cloudWriteTimer = setTimeout(() => {
-          if (currentCloudUser) {
-            saveToCloud(currentCloudUser, this._cache);
-          }
-        }, 2000);
-      } catch {}
-      resolve();
-    });
-  },
-
-  delete(key) {
-    return new Promise((resolve) => {
-      try {
-        localStorage.removeItem(key);
-        delete this._cache[key];
-      } catch {}
-      resolve();
-    });
-  },
-
-  async loadCloud(userName) {
-    const data = await loadFromCloud(userName);
-    if (!data) return false;
-    try {
-      if (data.vocab_progress) {
-        localStorage.setItem('vocabProgress', JSON.stringify(data.vocab_progress));
-        this._cache.vocabProgress = data.vocab_progress;
-      }
-      if (data.grammar_progress) {
-        localStorage.setItem('grammarProgress', JSON.stringify(data.grammar_progress));
-        this._cache.grammarProgress = data.grammar_progress;
-      }
-      if (data.review_schedule) {
-        localStorage.setItem('reviewSchedule', JSON.stringify(data.review_schedule));
-        this._cache.reviewSchedule = data.review_schedule;
-      }
-      if (data.daily_log) {
-        localStorage.setItem('dailyLog', JSON.stringify(data.daily_log));
-        this._cache.dailyLog = data.daily_log;
-      }
-      return true;
-    } catch { return false; }
-  },
-
-  async setCloudUser(userName) {
-    console.log('[Cloud] setCloudUser called:', userName);
-    currentCloudUser = userName;
-    if (userName) {
-      await this._ensureLocal();
-      await saveToCloud(userName, this._cache);
-    }
-  },
-
-  async deleteCloud() {
-    if (currentCloudUser) {
-      await deleteCloudUser(currentCloudUser);
-    }
-    currentCloudUser = null;
-  }
-};
-
-// ============================================================
-// APP
-// ============================================================
-function App() {
+export default function App() {
   const [view, setView] = useState("home");
   const [currentUnit, setCurrentUnit] = useState(1);
   const [currentGrammar, setCurrentGrammar] = useState(0);
   const [currentReading, setCurrentReading] = useState(0);
   const [vocabProgress, setVocabProgress] = useState({});
-  const [grammarProgress, setGrammarProgress] = useState({});
   const [reviewSchedule, setReviewSchedule] = useState([]);
   const [dailyLog, setDailyLog] = useState({});
-  const [storageLoaded, setStorageLoaded] = useState(false);
-  const [showSettings, setShowSettings] = useState(false);
-  const [userName, setUserName] = useState("");
+  const [errorProgress, setErrorProgress] = useState({});
+  const [loaded, setLoaded] = useState(false);
+  const [syncStatus, setSyncStatus] = useState("loading"); // loading, synced, offline, error
+  const [userName, setUserName] = useState(DEFAULT_USER);
 
-  useEffect(() => {
-    async function load() {
-      try {
-        const vp = await Storage.get("vocabProgress");
-        if (vp) setVocabProgress(JSON.parse(vp.value));
-      } catch {}
-      try {
-        const gp = await Storage.get("grammarProgress");
-        if (gp) setGrammarProgress(JSON.parse(gp.value));
-      } catch {}
-      try {
-        const rs = await Storage.get("reviewSchedule");
-        if (rs) setReviewSchedule(JSON.parse(rs.value));
-      } catch {}
-      try {
-        const dl = await Storage.get("dailyLog");
-        if (dl) setDailyLog(JSON.parse(dl.value));
-      } catch {}
-      try {
-        const un = await Storage.get("userName");
-        if (un && un.value) {
-          setUserName(un.value);
-          // Try to load from cloud
-          const loaded = await Storage.loadCloud(un.value);
-          if (loaded) {
-            // Reload state from cloud
-            const vp2 = await Storage.get("vocabProgress");
-            if (vp2) setVocabProgress(JSON.parse(vp2.value));
-            const gp2 = await Storage.get("grammarProgress");
-            if (gp2) setGrammarProgress(JSON.parse(gp2.value));
-            const rs2 = await Storage.get("reviewSchedule");
-            if (rs2) setReviewSchedule(JSON.parse(rs2.value));
-            const dl2 = await Storage.get("dailyLog");
-            if (dl2) setDailyLog(JSON.parse(dl2.value));
-          }
-        }
-      } catch {}
-      setStorageLoaded(true);
-    }
-    load();
-  }, []);
-
-  const saveVocab = useCallback(async (data) => {
-    setVocabProgress(data);
-    try { await Storage.set("vocabProgress", JSON.stringify(data)); } catch {}
-  }, []);
-
-  const saveGrammar = useCallback(async (data) => {
-    setGrammarProgress(data);
-    try { await Storage.set("grammarProgress", JSON.stringify(data)); } catch {}
-  }, []);
-
-  const saveReview = useCallback(async (data) => {
-    setReviewSchedule(data);
-    try { await Storage.set("reviewSchedule", JSON.stringify(data)); } catch {}
-  }, []);
-
-  const saveDaily = useCallback(async (data) => {
-    setDailyLog(data);
-    try { await Storage.set("dailyLog", JSON.stringify(data)); } catch {}
-  }, []);
-
-  const saveUserName = useCallback(async (name) => {
-    setUserName(name);
-    try { await Storage.set("userName", name); } catch {}
-    // Load from cloud
-    const loaded = await Storage.loadCloud(name);
-    if (loaded) {
-      const vp = await Storage.get("vocabProgress");
-      if (vp) setVocabProgress(JSON.parse(vp.value));
-      const gp = await Storage.get("grammarProgress");
-      if (gp) setGrammarProgress(JSON.parse(gp.value));
-      const rs = await Storage.get("reviewSchedule");
-      if (rs) setReviewSchedule(JSON.parse(rs.value));
-      const dl = await Storage.get("dailyLog");
-      if (dl) setDailyLog(JSON.parse(dl.value));
-    }
-    await Storage.setCloudUser(name);
-    setShowSettings(false);
-  }, []);
-
-  const resetAll = useCallback(async () => {
-    if (confirm("确定要重置所有进度吗？此操作不可撤销。")) {
-      setVocabProgress({});
-      setGrammarProgress({});
-      setReviewSchedule([]);
-      setDailyLog({});
-      try {
-        await Storage.delete("vocabProgress");
-        await Storage.delete("grammarProgress");
-        await Storage.delete("reviewSchedule");
-        await Storage.delete("dailyLog");
-        await Storage.deleteCloud();
-      } catch {}
-    }
-  }, []);
+  const saveTimer = useRef(null);
+  const dataRef = useRef({ vocabProgress: {}, reviewSchedule: [], dailyLog: {}, errorProgress: {} });
 
   const todayStr = new Date().toISOString().slice(0, 10);
+
+  // Keep ref in sync
+  useEffect(() => {
+    dataRef.current = { vocabProgress, reviewSchedule, dailyLog, errorProgress };
+  }, [vocabProgress, reviewSchedule, dailyLog, errorProgress]);
+
+  // Load: try Supabase first, fallback to local storage
+  useEffect(() => {
+    (async () => {
+      let loadedFromCloud = false;
+
+      // Try Supabase first
+      const cloudData = await sbLoad(userName);
+      if (cloudData) {
+        const vp = cloudData.vocab_progress || {};
+        const rs = cloudData.review_schedule || [];
+        const dl = cloudData.daily_log || {};
+        const ep = cloudData.error_progress || {};
+        setVocabProgress(vp);
+        setReviewSchedule(rs);
+        setDailyLog(dl);
+        setErrorProgress(ep);
+        loadedFromCloud = true;
+        setSyncStatus("synced");
+        // Also save to local as cache
+        try {
+          await window.storage.set("vocabProgress", JSON.stringify(vp));
+          await window.storage.set("reviewSchedule", JSON.stringify(rs));
+          await window.storage.set("dailyLog", JSON.stringify(dl));
+          await window.storage.set("errorProgress", JSON.stringify(ep));
+        } catch {}
+      }
+
+      // Fallback: load from local
+      if (!loadedFromCloud) {
+        setSyncStatus("offline");
+        const keys = ["vocabProgress","reviewSchedule","dailyLog","errorProgress"];
+        const setters = [setVocabProgress, setReviewSchedule, setDailyLog, setErrorProgress];
+        for (let i = 0; i < keys.length; i++) {
+          try { const r = await window.storage.get(keys[i]); if (r) setters[i](JSON.parse(r.value)); } catch {}
+        }
+      }
+
+      setLoaded(true);
+    })();
+  }, [userName]);
+
+  // Debounced save to both local + Supabase
+  const save = useCallback(async (key, val, setter) => {
+    setter(val);
+    // Save to local immediately
+    try { await window.storage.set(key, JSON.stringify(val)); } catch {}
+
+    // Debounce cloud save (wait 1.5s after last change)
+    if (saveTimer.current) clearTimeout(saveTimer.current);
+    saveTimer.current = setTimeout(async () => {
+      const d = dataRef.current;
+      const ok = await sbSave(userName, {
+        vocabProgress: d.vocabProgress,
+        reviewSchedule: d.reviewSchedule,
+        dailyLog: d.dailyLog,
+        errorProgress: d.errorProgress,
+        grammarProgress: {}
+      });
+      setSyncStatus(ok ? "synced" : "offline");
+    }, 1500);
+  }, [userName]);
+
+  // Force sync button
+  const forceSync = useCallback(async () => {
+    setSyncStatus("loading");
+    const d = dataRef.current;
+    const ok = await sbSave(userName, {
+      vocabProgress: d.vocabProgress,
+      reviewSchedule: d.reviewSchedule,
+      dailyLog: d.dailyLog,
+      errorProgress: d.errorProgress,
+      grammarProgress: {}
+    });
+    setSyncStatus(ok ? "synced" : "error");
+  }, [userName]);
+
+  // Pull from cloud
+  const pullFromCloud = useCallback(async () => {
+    setSyncStatus("loading");
+    const cloudData = await sbLoad(userName);
+    if (cloudData) {
+      setVocabProgress(cloudData.vocab_progress || {});
+      setReviewSchedule(cloudData.review_schedule || []);
+      setDailyLog(cloudData.daily_log || {});
+      setErrorProgress(cloudData.error_progress || {});
+      setSyncStatus("synced");
+    } else {
+      setSyncStatus("error");
+    }
+  }, [userName]);
 
   const stats = useMemo(() => {
     const totalWords = Object.values(VOCAB_DATA).reduce((s, u) => s + u.words.length, 0);
     const mastered = Object.values(vocabProgress).filter(v => v.level >= 3).length;
-    const learning = Object.values(vocabProgress).filter(v => v.level > 0 && v.level < 3).length;
     const todayReviews = reviewSchedule.filter(r => r.date <= todayStr && !r.done).length;
-    const streakDays = Object.keys(dailyLog).filter(d => dailyLog[d].done).length;
-    return { totalWords, mastered, learning, todayReviews, streakDays };
-  }, [vocabProgress, reviewSchedule, dailyLog, todayStr]);
+    const errorTotal = ERROR_BOOK_DATA.length;
+    const errorMastered = Object.values(errorProgress).filter(v => v >= 2).length;
+    return { totalWords, mastered, todayReviews, errorTotal, errorMastered };
+  }, [vocabProgress, reviewSchedule, errorProgress, todayStr]);
 
-  if (!storageLoaded) {
-    return <div style={{display:"flex",alignItems:"center",justifyContent:"center",height:"100vh",fontFamily:"'Noto Sans SC',sans-serif",fontSize:18,color:"#666",background:"#faf9f7"}}>加载中...</div>;
-  }
+  if (!loaded) return <div style={{display:"flex",alignItems:"center",justifyContent:"center",height:"100vh",fontFamily:"'Noto Sans SC',sans-serif",color:"#888"}}>加载中...</div>;
+
+  const tabs = [
+    { id:"home", label:"首页", icon:"🏠", color:"#fff" },
+    { id:"vocab", label:"单词", icon:"📝", color:"#fff" },
+    { id:"errors", label:"错题本", icon:"❌", color:"#ffe0e0" },
+    { id:"grammar", label:"语法", icon:"📐", color:"#fff" },
+    { id:"reading", label:"阅读", icon:"📖", color:"#fff" },
+    { id:"review", label:"复习", icon:"🔄", color:"#fff" },
+  ];
 
   return (
-    <div style={{ fontFamily: "'Noto Sans SC', 'Segoe UI', sans-serif", background: "#faf9f7", minHeight: "100vh", color: "#1a1a2e" }}>
+    <div style={{fontFamily:"'Noto Sans SC','Segoe UI',sans-serif",background:"#faf9f7",minHeight:"100vh",color:"#1a1a2e"}}>
+      <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700;900&display=swap" rel="stylesheet"/>
+      <style>{`
+        *{box-sizing:border-box;margin:0;padding:0}
+        button{cursor:pointer;border:none;font-family:inherit}
+        .card{background:#fff;border-radius:16px;box-shadow:0 2px 12px rgba(0,0,0,.06);padding:20px;margin-bottom:14px}
+        .pb{height:8px;background:#e8e8e8;border-radius:4px;overflow:hidden}
+        .pf{height:100%;border-radius:4px;transition:width .5s}
+        @keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+        .fi{animation:fadeIn .35s ease}
+        .qi{width:100%;padding:14px;border:2px solid #e0e0e0;border-radius:12px;font-size:16px;font-family:inherit;outline:none;transition:border-color .2s}
+        .qi:focus{border-color:#4a7dff}
+        .tag{display:inline-block;padding:3px 10px;border-radius:6px;font-size:11px;font-weight:600;margin-right:6px}
+        @keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.04)}}
+        .pulse{animation:pulse 2s infinite}
+      `}</style>
+
       {/* HEADER */}
-      <div style={{ background: "linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)", padding: "20px 24px 16px", color: "#fff" }}>
-        <div style={{ maxWidth: 800, margin: "0 auto" }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+      <div style={{background:"linear-gradient(135deg,#1a1a2e 0%,#16213e 50%,#0f3460 100%)",padding:"18px 20px 14px",color:"#fff"}}>
+        <div style={{maxWidth:800,margin:"0 auto"}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
             <div>
-              <h1 style={{ fontSize: 22, fontWeight: 900, letterSpacing: -1 }}>
-                <span style={{ color: "#e94560" }}>E</span>nglish
-                <span style={{ color: "#e94560" }}> L</span>ab
-              </h1>
-              <p style={{ fontSize: 12, color: "rgba(255,255,255,.6)", marginTop: 2 }}>六年级英语提分工具</p>
+              <h1 style={{fontSize:22,fontWeight:900,letterSpacing:-1}}><span style={{color:"#e94560"}}>C</span>indy's <span style={{color:"#e94560"}}>E</span>nglish <span style={{color:"#e94560"}}>L</span>ab</h1>
+              <p style={{fontSize:11,color:"rgba(255,255,255,.5)",marginTop:1}}>六年级英语提分工具 · v3.0
+                <span style={{marginLeft:8,padding:"1px 6px",borderRadius:4,fontSize:10,
+                  background: syncStatus==="synced"?"rgba(67,233,123,.3)":syncStatus==="loading"?"rgba(255,255,255,.2)":"rgba(233,69,96,.3)",
+                  color: syncStatus==="synced"?"#43e97b":syncStatus==="loading"?"#fff":"#ff6b6b"
+                }}>{syncStatus==="synced"?"☁️ 已同步":syncStatus==="loading"?"⏳ 同步中":"⚠️ 离线"}</span>
+              </p>
             </div>
-            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-              {userName && (
-                <div style={{ fontSize: 13, color: "rgba(255,255,255,.7)", textAlign: "right" }}>
-                  <div style={{ fontSize: 11, opacity: 0.6 }}>当前用户</div>
-                  <div style={{ fontWeight: 600 }}>{userName}</div>
-                </div>
-              )}
-              <button onClick={() => setShowSettings(true)} style={{ background: "rgba(255,255,255,.15)", border: "1px solid rgba(255,255,255,.25)", borderRadius: 10, padding: "8px 14px", color: "#fff", fontSize: 18, display: "flex", alignItems: "center", gap: 6, cursor: "pointer" }}>
-                ⚙️ <span style={{ fontSize: 13 }}>设置</span>
-              </button>
+            <div style={{textAlign:"right",fontSize:12,color:"rgba(255,255,255,.6)"}}>
+              已掌握 <span style={{fontSize:20,fontWeight:700,color:"#43e97b"}}>{stats.mastered}</span>/{stats.totalWords} 词
             </div>
           </div>
-          <div style={{ display: "flex", gap: 8, marginTop: 16, overflowX: "auto", paddingBottom: 4 }}>
-            {[
-              { id: "home", label: "首页", icon: "🏠" },
-              { id: "vocab", label: "单词", icon: "📝" },
-              { id: "grammar", label: "语法", icon: "📐" },
-              { id: "reading", label: "阅读", icon: "📖" },
-              { id: "review", label: "复习", icon: "🔄" },
-            ].map(tab => (
-              <button key={tab.id}
-                className={`nav-btn ${view === tab.id ? "active" : ""}`}
-                onClick={() => setView(tab.id)}
-                style={{
-                  background: view === tab.id ? "#e94560" : "rgba(255,255,255,.1)",
-                  color: "#fff",
-                  whiteSpace: "nowrap",
-                  flex: "0 0 auto",
-                  boxShadow: view === tab.id ? "0 4px 16px rgba(0,0,0,.15)" : "none"
-                }}>
-                {tab.icon} {tab.label}
-              </button>
+          <div style={{display:"flex",gap:6,marginTop:14,overflowX:"auto",paddingBottom:4}}>
+            {tabs.map(t => (
+              <button key={t.id} onClick={() => setView(t.id)} style={{
+                padding:"10px 14px",borderRadius:10,fontSize:13,fontWeight:600,whiteSpace:"nowrap",flex:"0 0 auto",
+                background: view===t.id ? (t.id==="errors" ? "#e94560" : "#e94560") : "rgba(255,255,255,.1)",
+                color:"#fff", boxShadow: view===t.id ? "0 4px 14px rgba(233,69,96,.4)" : "none",
+              }}>{t.icon} {t.label} {t.id==="errors" && stats.errorTotal-stats.errorMastered>0 ? `(${stats.errorTotal-stats.errorMastered})` : ""}</button>
             ))}
           </div>
         </div>
       </div>
 
-      {/* CONTENT */}
-      <div style={{ maxWidth: 800, margin: "0 auto", padding: "20px 16px 100px" }} className="fade-in">
-        {view === "home" && <HomeView stats={stats} setView={setView} todayStr={todayStr} reviewSchedule={reviewSchedule} dailyLog={dailyLog} vocabProgress={vocabProgress} />}
-        {view === "vocab" && <VocabView unit={currentUnit} setUnit={setCurrentUnit} vocabProgress={vocabProgress} saveVocab={saveVocab} reviewSchedule={reviewSchedule} saveReview={saveReview} todayStr={todayStr} dailyLog={dailyLog} saveDaily={saveDaily} />}
-        {view === "grammar" && <GrammarView current={currentGrammar} setCurrent={setCurrentGrammar} grammarProgress={grammarProgress} saveGrammar={saveGrammar} />}
-        {view === "reading" && <ReadingView current={currentReading} setCurrent={setCurrentReading} />}
-        {view === "review" && <ReviewView vocabProgress={vocabProgress} saveVocab={saveVocab} reviewSchedule={reviewSchedule} saveReview={saveReview} todayStr={todayStr} />}
+      <div style={{maxWidth:800,margin:"0 auto",padding:"16px 14px 80px"}} className="fi">
+        {view==="home" && <HomeView stats={stats} setView={setView} todayStr={todayStr} reviewSchedule={reviewSchedule} vocabProgress={vocabProgress} errorProgress={errorProgress} />}
+        {view==="vocab" && <VocabView unit={currentUnit} setUnit={setCurrentUnit} vp={vocabProgress} save={(v)=>save("vocabProgress",v,setVocabProgress)} rs={reviewSchedule} saveRs={(v)=>save("reviewSchedule",v,setReviewSchedule)} today={todayStr} />}
+        {view==="errors" && <ErrorBookView ep={errorProgress} save={(v)=>save("errorProgress",v,setErrorProgress)} />}
+        {view==="grammar" && <GrammarView cur={currentGrammar} setCur={setCurrentGrammar} />}
+        {view==="reading" && <ReadingView cur={currentReading} setCur={setCurrentReading} />}
+        {view==="review" && <ReviewView vp={vocabProgress} saveVp={(v)=>save("vocabProgress",v,setVocabProgress)} rs={reviewSchedule} saveRs={(v)=>save("reviewSchedule",v,setReviewSchedule)} today={todayStr} />}
       </div>
 
-      {/* SETTINGS MODAL */}
-      {showSettings && (
-        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.5)", zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
-          <div style={{ background: "#fff", borderRadius: 20, padding: 28, width: "100%", maxWidth: 360, boxShadow: "0 20px 60px rgba(0,0,0,.2)" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
-              <h2 style={{ fontSize: 18, fontWeight: 700 }}>⚙️ 设置</h2>
-              <button onClick={() => setShowSettings(false)} style={{ background: "none", fontSize: 20, color: "#999", padding: 4 }}>✕</button>
-            </div>
-            <div style={{ marginBottom: 20 }}>
-              <label style={{ fontSize: 14, fontWeight: 600, color: "#333", display: "block", marginBottom: 8 }}>用户名（用于多设备同步）</label>
-              <input
-                className="quiz-input"
-                type="text"
-                placeholder="输入名字，如：小明"
-                defaultValue={userName}
-                id="settings-name-input"
-                style={{ marginBottom: 10 }}
-              />
-              <button
-                onClick={() => {
-                  const val = document.getElementById("settings-name-input").value.trim();
-                  if (val) saveUserName(val);
-                }}
-                style={{ width: "100%", padding: "12px", background: "linear-gradient(135deg, #4a7dff, #43e97b)", color: "#fff", borderRadius: 12, fontSize: 15, fontWeight: 600, cursor: "pointer" }}
-              >保存名字</button>
-              {userName && <p style={{ fontSize: 12, color: "#4caf50", marginTop: 8, textAlign: "center" }}>当前用户：{userName}</p>}
-            </div>
-            <div style={{ borderTop: "1px solid #eee", paddingTop: 16 }}>
-              <button onClick={resetAll} style={{ width: "100%", padding: "10px", background: "#fff", border: "1px solid #e0e0e0", borderRadius: 10, fontSize: 14, color: "#999", cursor: "pointer" }}>🗑 重置所有进度</button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* FOOTER */}
-      <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, background: "rgba(250,249,247,.95)", backdropFilter: "blur(10px)", borderTop: "1px solid #eee", padding: "8px 16px", textAlign: "center" }}>
-        <span style={{ fontSize: 11, color: "#bbb" }}>English Lab · 六年级英语提分</span>
+      <div style={{position:"fixed",bottom:0,left:0,right:0,background:"rgba(250,249,247,.95)",backdropFilter:"blur(10px)",borderTop:"1px solid #eee",padding:"6px 12px",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+        <button onClick={pullFromCloud} style={{fontSize:11,color:"#4a7dff",background:"none",fontWeight:500}}>⬇️ 从云端拉取</button>
+        <button onClick={forceSync} style={{fontSize:11,color:"#4caf50",background:"none",fontWeight:500}}>⬆️ 上传到云端</button>
+        <button onClick={async()=>{if(confirm("确定重置所有进度？这会同时清除本地和云端数据。")){setVocabProgress({});setReviewSchedule([]);setDailyLog({});setErrorProgress({});try{await window.storage.delete("vocabProgress");await window.storage.delete("reviewSchedule");await window.storage.delete("dailyLog");await window.storage.delete("errorProgress")}catch{}await sbSave(userName,{vocabProgress:{},reviewSchedule:[],dailyLog:{},errorProgress:{},grammarProgress:{}})}}} style={{fontSize:11,color:"#bbb",background:"none"}}>重置进度</button>
       </div>
     </div>
   );
 }
 
 // ============================================================
-// HOME VIEW
+// HOME
 // ============================================================
-function HomeView({ stats, setView, todayStr, reviewSchedule, dailyLog, vocabProgress }) {
-  const todayReviewWords = reviewSchedule.filter(r => r.date <= todayStr && !r.done);
-  const todayDone = dailyLog[todayStr]?.done || false;
+function HomeView({stats,setView,todayStr,reviewSchedule,vocabProgress,errorProgress}) {
+  const todayReviews = reviewSchedule.filter(r=>r.date<=todayStr&&!r.done);
+  const unresolvedErrors = ERROR_BOOK_DATA.length - Object.values(errorProgress).filter(v=>v>=2).length;
+  return <div>
+    <div className="card" style={{background:"linear-gradient(135deg,#e94560,#ff6b6b)",color:"#fff"}}>
+      <div style={{fontSize:13,opacity:.8}}>{new Date().toLocaleDateString("zh-CN",{weekday:"long",month:"long",day:"numeric"})}</div>
+      <div style={{fontSize:20,fontWeight:700,marginTop:4}}>📚 今日学习任务</div>
+    </div>
 
-  const getRecommendedUnit = () => {
-    for (let u = 1; u <= 6; u++) {
-      const words = VOCAB_DATA[u].words;
-      const masteredCount = words.filter(w => (vocabProgress[w.en]?.level || 0) >= 3).length;
-      if (masteredCount < words.length * 0.8) return u;
-    }
-    return 1;
+    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:14}}>
+      <div className="card" style={{textAlign:"center",padding:16}}>
+        <div style={{fontSize:28,fontWeight:900,color:"#4a7dff"}}>{stats.mastered}</div>
+        <div style={{fontSize:12,color:"#888"}}>已掌握单词</div>
+      </div>
+      <div className="card" style={{textAlign:"center",padding:16}}>
+        <div style={{fontSize:28,fontWeight:900,color:"#e94560"}}>{unresolvedErrors}</div>
+        <div style={{fontSize:12,color:"#888"}}>待攻克错题</div>
+      </div>
+    </div>
+
+    <div className="card">
+      <h3 style={{fontSize:15,fontWeight:700,marginBottom:14}}>📋 今日计划</h3>
+      {[
+        {icon:"📝",label:"背单词",sub:"15分钟",view:"vocab",bg:"#f0f4ff",accent:"#4a7dff"},
+        {icon:"❌",label:`攻克错题 · ${unresolvedErrors}题待练`,sub:"重点突破",view:"errors",bg:"#fff0f0",accent:"#e94560"},
+        {icon:"📐",label:"语法练习",sub:"20分钟",view:"grammar",bg:"#fff8f0",accent:"#e8723a"},
+        {icon:"📖",label:"阅读理解",sub:"10分钟",view:"reading",bg:"#f0faf0",accent:"#4caf50"},
+      ].map((t,i) => (
+        <button key={i} onClick={()=>setView(t.view)} style={{display:"flex",alignItems:"center",gap:12,padding:14,background:t.bg,borderRadius:12,textAlign:"left",width:"100%",marginBottom:8}}>
+          <span style={{fontSize:26}}>{t.icon}</span>
+          <div style={{flex:1}}>
+            <div style={{fontWeight:600,fontSize:14}}>{t.label}</div>
+            <div style={{fontSize:12,color:"#999",marginTop:1}}>{t.sub}</div>
+          </div>
+          <span style={{color:t.accent,fontSize:18}}>→</span>
+        </button>
+      ))}
+      {todayReviews.length > 0 && (
+        <button onClick={()=>setView("review")} className="pulse" style={{display:"flex",alignItems:"center",gap:12,padding:14,background:"#fef0f0",borderRadius:12,textAlign:"left",width:"100%",border:"2px solid #e94560"}}>
+          <span style={{fontSize:26}}>🔄</span>
+          <div style={{flex:1}}>
+            <div style={{fontWeight:600,fontSize:14,color:"#e94560"}}>艾宾浩斯复习 · {todayReviews.length}词</div>
+            <div style={{fontSize:12,color:"#999",marginTop:1}}>防遗忘！</div>
+          </div>
+        </button>
+      )}
+    </div>
+
+    <div className="card">
+      <h3 style={{fontSize:15,fontWeight:700,marginBottom:14}}>📚 单元进度</h3>
+      {Object.entries(VOCAB_DATA).map(([u,d]) => {
+        const t=d.words.length, m=d.words.filter(w=>(vocabProgress[w.en]?.level||0)>=3).length, p=Math.round(m/t*100);
+        return <div key={u} style={{marginBottom:12}}>
+          <div style={{display:"flex",justifyContent:"space-between",fontSize:13,marginBottom:3}}>
+            <span style={{fontWeight:500}}>U{u} {d.name}</span><span style={{color:"#aaa"}}>{m}/{t}</span>
+          </div>
+          <div className="pb"><div className="pf" style={{width:`${p}%`,background:p>=80?"#43e97b":p>=40?"#ffc107":"#e94560"}}/></div>
+        </div>;
+      })}
+    </div>
+  </div>;
+}
+
+// ============================================================
+// ERROR BOOK VIEW ⭐ NEW MODULE
+// ============================================================
+function ErrorBookView({ep,save}) {
+  const [mode,setMode] = useState("list"); // list, practice, detail
+  const [filter,setFilter] = useState("all"); // all, unmastered, mastered
+  const [practiceIdx,setPracticeIdx] = useState(0);
+  const [answer,setAnswer] = useState("");
+  const [result,setResult] = useState(null);
+  const [detailId,setDetailId] = useState(null);
+  const [practiceList,setPracticeList] = useState([]);
+
+  const categories = [...new Set(ERROR_BOOK_DATA.map(e=>e.category))];
+  const [catFilter,setCatFilter] = useState("all");
+
+  const filtered = ERROR_BOOK_DATA.filter(e => {
+    const level = ep[e.id] || 0;
+    if (filter==="unmastered" && level>=2) return false;
+    if (filter==="mastered" && level<2) return false;
+    if (catFilter!=="all" && e.category!==catFilter) return false;
+    return true;
+  });
+
+  const startPractice = () => {
+    const unmastered = ERROR_BOOK_DATA.filter(e=>(ep[e.id]||0)<2);
+    if (unmastered.length===0) { alert("所有错题都已掌握！太棒了！"); return; }
+    const shuffled = [...unmastered].sort(()=>Math.random()-.5).slice(0,8);
+    setPracticeList(shuffled);
+    setPracticeIdx(0);
+    setAnswer("");
+    setResult(null);
+    setMode("practice");
   };
 
-  const recUnit = getRecommendedUnit();
-  const recGrammar = GRAMMAR_DATA.find((g, i) => {
-    const key = `grammar_${g.id}`;
-    return !vocabProgress[key] || vocabProgress[key] < 0.8;
-  }) || GRAMMAR_DATA[0];
+  const checkPractice = () => {
+    const item = practiceList[practiceIdx];
+    const correct = answer.trim().toLowerCase() === item.correctAnswer.split("（")[0].split("(")[0].trim().toLowerCase() 
+      || answer.trim().toLowerCase() === item.correctAnswer.toLowerCase();
+    setResult(correct ? "correct" : "wrong");
+  };
 
-  return (
-    <div>
-      <div className="card" style={{ background: todayDone ? "linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)" : "linear-gradient(135deg, #e94560 0%, #ff6b6b 100%)", color: "#fff" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <div>
-            <div style={{ fontSize: 14, opacity: .8 }}>{new Date().toLocaleDateString("zh-CN", { weekday: "long", month: "long", day: "numeric" })}</div>
-            <div style={{ fontSize: 22, fontWeight: 700, marginTop: 4 }}>
-              {todayDone ? "✅ 今天已完成学习！" : "📚 今天还没开始学习"}
+  const nextPractice = async () => {
+    const item = practiceList[practiceIdx];
+    const prev = ep[item.id] || 0;
+    const next = result==="correct" ? Math.min(prev+1,3) : 0;
+    await save({...ep, [item.id]: next});
+    
+    if (practiceIdx < practiceList.length-1) {
+      setPracticeIdx(practiceIdx+1);
+      setAnswer("");
+      setResult(null);
+    } else {
+      setMode("list");
+    }
+  };
+
+  // DETAIL VIEW
+  if (mode==="detail" && detailId) {
+    const item = ERROR_BOOK_DATA.find(e=>e.id===detailId);
+    if (!item) { setMode("list"); return null; }
+    const level = ep[item.id] || 0;
+    return <div>
+      <button onClick={()=>setMode("list")} style={{fontSize:14,color:"#666",background:"none",marginBottom:16}}>← 返回错题列表</button>
+      <div className="card fi">
+        <div style={{display:"flex",gap:6,marginBottom:12,flexWrap:"wrap"}}>
+          <span className="tag" style={{background:"#e8f0ff",color:"#4a7dff"}}>Unit {item.unit}</span>
+          <span className="tag" style={{background:item.difficulty==="基础"?"#e8f5e9":"#fff3e0",color:item.difficulty==="基础"?"#4caf50":"#e8723a"}}>{item.difficulty}</span>
+          <span className="tag" style={{background:"#f3e5f5",color:"#9c27b0"}}>{item.category}</span>
+          <span className="tag" style={{background:level>=2?"#e8f5e9":"#fee",color:level>=2?"#4caf50":"#e94560"}}>{level>=2?"已掌握":"待攻克"}</span>
+        </div>
+
+        <h3 style={{fontSize:17,fontWeight:700,marginBottom:16}}>{item.question}</h3>
+
+        <div style={{padding:16,background:"#fff0f0",borderRadius:12,marginBottom:12,borderLeft:"4px solid #e94560"}}>
+          <div style={{fontSize:12,fontWeight:600,color:"#e94560",marginBottom:4}}>❌ 你的错误答案</div>
+          <div style={{fontSize:15,color:"#c62828"}}>{item.wrongAnswer}</div>
+        </div>
+
+        <div style={{padding:16,background:"#e8f5e9",borderRadius:12,marginBottom:12,borderLeft:"4px solid #4caf50"}}>
+          <div style={{fontSize:12,fontWeight:600,color:"#4caf50",marginBottom:4}}>✅ 正确答案</div>
+          <div style={{fontSize:15,color:"#2e7d32",fontWeight:600}}>{item.correctAnswer}</div>
+        </div>
+
+        <div style={{padding:16,background:"#f8f9ff",borderRadius:12,marginBottom:12}}>
+          <div style={{fontSize:12,fontWeight:600,color:"#4a7dff",marginBottom:6}}>💡 解析</div>
+          <div style={{fontSize:14,lineHeight:1.8,color:"#333"}}>{item.explanation}</div>
+        </div>
+
+        {item.relatedWords.length > 0 && (
+          <div style={{padding:12,background:"#fafafa",borderRadius:10}}>
+            <div style={{fontSize:12,fontWeight:600,color:"#888",marginBottom:6}}>📎 相关单词</div>
+            <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
+              {item.relatedWords.map((w,i) => <span key={i} className="tag" style={{background:"#e8f0ff",color:"#4a7dff"}}>{w}</span>)}
             </div>
           </div>
-          {todayReviewWords.length > 0 && (
-            <div className="pulse" style={{ background: "rgba(255,255,255,.25)", borderRadius: 12, padding: "8px 16px", textAlign: "center" }}>
-              <div style={{ fontSize: 24, fontWeight: 900 }}>{todayReviewWords.length}</div>
-              <div style={{ fontSize: 11 }}>待复习</div>
+        )}
+      </div>
+    </div>;
+  }
+
+  // PRACTICE MODE
+  if (mode==="practice" && practiceList.length > 0) {
+    const item = practiceList[practiceIdx];
+    return <div>
+      <button onClick={()=>setMode("list")} style={{fontSize:14,color:"#666",background:"none",marginBottom:16}}>← 退出练习</button>
+      <div style={{textAlign:"center",marginBottom:14,fontSize:13,color:"#888"}}>
+        错题攻克 · {practiceIdx+1}/{practiceList.length}
+        <div className="pb" style={{marginTop:6}}><div className="pf" style={{width:`${(practiceIdx+1)/practiceList.length*100}%`,background:"#e94560"}}/></div>
+      </div>
+      <div className="card fi" style={{padding:"28px 20px"}}>
+        <div style={{display:"flex",gap:6,marginBottom:12}}>
+          <span className="tag" style={{background:"#f3e5f5",color:"#9c27b0"}}>{item.category}</span>
+          <span className="tag" style={{background:"#fff3e0",color:"#e8723a"}}>{item.difficulty}</span>
+        </div>
+        <div style={{fontSize:16,fontWeight:600,lineHeight:1.7,marginBottom:8}}>{item.question}</div>
+        <div style={{fontSize:13,color:"#c62828",marginBottom:20}}>你上次写的：<s>{item.wrongAnswer}</s></div>
+
+        <input className="qi" value={answer} onChange={e=>setAnswer(e.target.value)}
+          onKeyDown={e=>e.key==="Enter"&&(result===null?checkPractice():nextPractice())}
+          placeholder="输入正确答案..." disabled={result!==null} autoFocus
+          style={result!==null?{borderColor:result==="correct"?"#4caf50":"#e94560",background:result==="correct"?"#e8f5e9":"#fee"}:{}}
+        />
+
+        {result!==null && <div className="fi" style={{marginTop:14}}>
+          {result==="correct" ? (
+            <div style={{color:"#4caf50",fontWeight:600,fontSize:15}}>✅ 正确！</div>
+          ) : (
+            <div>
+              <div style={{color:"#e94560",fontWeight:600,fontSize:15}}>❌ 正确答案：{item.correctAnswer}</div>
+              <div style={{marginTop:8,padding:12,background:"#f8f9ff",borderRadius:10,fontSize:13,lineHeight:1.7,color:"#555"}}>{item.explanation}</div>
             </div>
           )}
-        </div>
-      </div>
+        </div>}
 
-      <div className="card">
-        <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 16 }}>📊 学习进度</h3>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12 }}>
-          <div style={{ textAlign: "center", padding: 12, background: "#f0f4ff", borderRadius: 12 }}>
-            <div style={{ fontSize: 28, fontWeight: 900, color: "#4a7dff" }}>{stats.mastered}</div>
-            <div style={{ fontSize: 12, color: "#666" }}>已掌握</div>
-          </div>
-          <div style={{ textAlign: "center", padding: 12, background: "#fff3e0", borderRadius: 12 }}>
-            <div style={{ fontSize: 28, fontWeight: 900, color: "#e8723a" }}>{stats.learning}</div>
-            <div style={{ fontSize: 12, color: "#666" }}>学习中</div>
-          </div>
-          <div style={{ textAlign: "center", padding: 12, background: "#e8f5e9", borderRadius: 12 }}>
-            <div style={{ fontSize: 28, fontWeight: 900, color: "#4caf50" }}>{stats.totalWords}</div>
-            <div style={{ fontSize: 12, color: "#666" }}>总词汇</div>
-          </div>
-        </div>
-        <div style={{ marginTop: 16 }}>
-          <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, color: "#666", marginBottom: 7 }}>
-            <span>总进度</span>
-            <span>{stats.totalWords > 0 ? Math.round(stats.mastered / stats.totalWords * 100) : 0}%</span>
-          </div>
-          <div className="progress-bar">
-            <div className="progress-fill" style={{ width: `${stats.totalWords > 0 ? stats.mastered / stats.totalWords * 100 : 0}%`, background: "linear-gradient(90deg, #4a7dff, #43e97b)" }} />
-          </div>
-        </div>
-      </div>
-
-      <div className="card">
-        <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 16 }}>📋 今日学习计划</h3>
-        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-          <button onClick={() => setView("vocab")} style={{ display: "flex", alignItems: "center", gap: 12, padding: 16, background: "#f8f9ff", borderRadius: 12, textAlign: "left", width: "100%" }}>
-            <span style={{ fontSize: 28 }}>📝</span>
-            <div style={{ flex: 1 }}>
-              <div style={{ fontWeight: 600, fontSize: 15 }}>背单词 · Unit {recUnit}</div>
-              <div style={{ fontSize: 12, color: "#888", marginTop: 2 }}>{VOCAB_DATA[recUnit].name} · 15分钟</div>
-            </div>
-            <span style={{ color: "#4a7dff", fontSize: 20 }}>→</span>
-          </button>
-          <button onClick={() => setView("grammar")} style={{ display: "flex", alignItems: "center", gap: 12, padding: 16, background: "#fff8f0", borderRadius: 12, textAlign: "left", width: "100%" }}>
-            <span style={{ fontSize: 28 }}>📐</span>
-            <div style={{ flex: 1 }}>
-              <div style={{ fontWeight: 600, fontSize: 15 }}>语法练习 · {recGrammar.title}</div>
-              <div style={{ fontSize: 12, color: "#888", marginTop: 2 }}>20分钟</div>
-            </div>
-            <span style={{ color: "#e8723a", fontSize: 20 }}>→</span>
-          </button>
-          <button onClick={() => setView("reading")} style={{ display: "flex", alignItems: "center", gap: 12, padding: 16, background: "#f0faf0", borderRadius: 12, textAlign: "left", width: "100%" }}>
-            <span style={{ fontSize: 28 }}>📖</span>
-            <div style={{ flex: 1 }}>
-              <div style={{ fontWeight: 600, fontSize: 15 }}>阅读理解练习</div>
-              <div style={{ fontSize: 12, color: "#888", marginTop: 2 }}>10分钟</div>
-            </div>
-            <span style={{ color: "#4caf50", fontSize: 20 }}>→</span>
-          </button>
-          {todayReviewWords.length > 0 && (
-            <button onClick={() => setView("review")} className="pulse" style={{ display: "flex", alignItems: "center", gap: 12, padding: 16, background: "#fef0f0", borderRadius: 12, textAlign: "left", width: "100%", border: "2px solid #e94560" }}>
-              <span style={{ fontSize: 28 }}>🔄</span>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontWeight: 600, fontSize: 15, color: "#e94560" }}>艾宾浩斯复习 · {todayReviewWords.length} 个单词</div>
-                <div style={{ fontSize: 12, color: "#888", marginTop: 2 }}>防止遗忘！</div>
-              </div>
-              <span style={{ color: "#e94560", fontSize: 20 }}>→</span>
+        <div style={{marginTop:20,textAlign:"center"}}>
+          {result===null ? (
+            <button onClick={checkPractice} style={{padding:"12px 36px",background:"#e94560",color:"#fff",borderRadius:12,fontSize:15,fontWeight:600}}>检查</button>
+          ) : (
+            <button onClick={nextPractice} style={{padding:"12px 36px",background:"#1a1a2e",color:"#fff",borderRadius:12,fontSize:15,fontWeight:600}}>
+              {practiceIdx<practiceList.length-1?"下一题 →":"完成"}
             </button>
           )}
         </div>
       </div>
+    </div>;
+  }
 
-      <div className="card">
-        <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 16 }}>📚 各单元掌握情况</h3>
-        {Object.entries(VOCAB_DATA).map(([unit, data]) => {
-          const total = data.words.length;
-          const mastered = data.words.filter(w => (vocabProgress[w.en]?.level || 0) >= 3).length;
-          const pct = Math.round(mastered / total * 100);
-          return (
-            <div key={unit} style={{ marginBottom: 14 }}>
-              <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, marginBottom: 4 }}>
-                <span style={{ fontWeight: 500 }}>Unit {unit}: {data.name}</span>
-                <span style={{ color: "#888" }}>{mastered}/{total}</span>
-              </div>
-              <div className="progress-bar">
-                <div className="progress-fill" style={{ width: `${pct}%`, background: pct >= 80 ? "#43e97b" : pct >= 40 ? "#ffc107" : "#e94560" }} />
-              </div>
-            </div>
-          );
-        })}
+  // LIST MODE
+  return <div>
+    {/* Stats banner */}
+    <div className="card" style={{background:"linear-gradient(135deg,#e94560,#ff6b6b)",color:"#fff",padding:20}}>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+        <div>
+          <div style={{fontSize:13,opacity:.8}}>一课一练错题本</div>
+          <div style={{fontSize:20,fontWeight:700,marginTop:4}}>共 {ERROR_BOOK_DATA.length} 道错题</div>
+        </div>
+        <div style={{display:"flex",gap:12}}>
+          <div style={{textAlign:"center"}}>
+            <div style={{fontSize:24,fontWeight:900}}>{Object.values(ep).filter(v=>v>=2).length}</div>
+            <div style={{fontSize:11,opacity:.8}}>已掌握</div>
+          </div>
+          <div style={{textAlign:"center"}}>
+            <div style={{fontSize:24,fontWeight:900}}>{ERROR_BOOK_DATA.length-Object.values(ep).filter(v=>v>=2).length}</div>
+            <div style={{fontSize:11,opacity:.8}}>待攻克</div>
+          </div>
+        </div>
+      </div>
+      <div className="pb" style={{marginTop:12,background:"rgba(255,255,255,.3)"}}>
+        <div className="pf" style={{width:`${ERROR_BOOK_DATA.length>0?Object.values(ep).filter(v=>v>=2).length/ERROR_BOOK_DATA.length*100:0}%`,background:"#fff"}}/>
       </div>
     </div>
-  );
+
+    {/* Start practice button */}
+    <button onClick={startPractice} style={{width:"100%",padding:16,background:"linear-gradient(135deg,#1a1a2e,#16213e)",color:"#fff",borderRadius:14,fontSize:17,fontWeight:700,marginBottom:14}}>
+      ⚔️ 开始攻克错题
+    </button>
+
+    {/* Filters */}
+    <div style={{display:"flex",gap:6,marginBottom:10,overflowX:"auto",paddingBottom:4}}>
+      {[{id:"all",label:"全部"},{id:"unmastered",label:"待攻克"},{id:"mastered",label:"已掌握"}].map(f => (
+        <button key={f.id} onClick={()=>setFilter(f.id)} style={{padding:"8px 14px",borderRadius:8,fontSize:12,fontWeight:600,
+          background:filter===f.id?"#1a1a2e":"#fff",color:filter===f.id?"#fff":"#666",border:filter===f.id?"none":"1px solid #ddd",whiteSpace:"nowrap"}}>
+          {f.label}
+        </button>
+      ))}
+      <div style={{width:1,background:"#ddd",margin:"0 4px"}}/>
+      <button onClick={()=>setCatFilter("all")} style={{padding:"8px 12px",borderRadius:8,fontSize:12,fontWeight:600,
+        background:catFilter==="all"?"#e94560":"#fff",color:catFilter==="all"?"#fff":"#666",border:catFilter==="all"?"none":"1px solid #ddd",whiteSpace:"nowrap"}}>所有类型</button>
+      {categories.map(c => (
+        <button key={c} onClick={()=>setCatFilter(c)} style={{padding:"8px 12px",borderRadius:8,fontSize:12,fontWeight:600,
+          background:catFilter===c?"#e94560":"#fff",color:catFilter===c?"#fff":"#666",border:catFilter===c?"none":"1px solid #ddd",whiteSpace:"nowrap",flex:"0 0 auto"}}>
+          {c}
+        </button>
+      ))}
+    </div>
+
+    {/* Error list */}
+    {filtered.map(e => {
+      const level = ep[e.id] || 0;
+      return <div key={e.id} className="card" style={{padding:14,cursor:"pointer",borderLeft:`4px solid ${level>=2?"#4caf50":"#e94560"}`}} onClick={()=>{setDetailId(e.id);setMode("detail")}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:8}}>
+          <div style={{flex:1}}>
+            <div style={{display:"flex",gap:4,marginBottom:6,flexWrap:"wrap"}}>
+              <span className="tag" style={{background:"#e8f0ff",color:"#4a7dff"}}>U{e.unit}</span>
+              <span className="tag" style={{background:"#f3e5f5",color:"#9c27b0"}}>{e.category}</span>
+              <span className="tag" style={{background:e.difficulty==="基础"?"#e8f5e9":e.difficulty==="中等"?"#fff3e0":"#fce4ec",color:e.difficulty==="基础"?"#4caf50":e.difficulty==="中等"?"#e8723a":"#c62828"}}>{e.difficulty}</span>
+            </div>
+            <div style={{fontSize:14,fontWeight:500,lineHeight:1.5,color:"#333"}}>{e.question}</div>
+            <div style={{fontSize:12,color:"#c62828",marginTop:4}}>错答：<s>{e.wrongAnswer}</s></div>
+          </div>
+          <div style={{textAlign:"center",minWidth:50}}>
+            <div style={{fontSize:20}}>{level>=2?"✅":"🔴"}</div>
+            <div style={{fontSize:10,color:"#999",marginTop:2}}>{level>=2?"已掌握":level===1?"练习中":"待练习"}</div>
+          </div>
+        </div>
+      </div>;
+    })}
+
+    {filtered.length===0 && <div style={{textAlign:"center",padding:40,color:"#888"}}>
+      <div style={{fontSize:40,marginBottom:8}}>🎉</div>
+      <div style={{fontSize:15,fontWeight:600}}>这个分类下没有错题了！</div>
+    </div>}
+  </div>;
 }
 
 // ============================================================
 // VOCAB VIEW
 // ============================================================
-function VocabView({ unit, setUnit, vocabProgress, saveVocab, reviewSchedule, saveReview, todayStr, dailyLog, saveDaily }) {
-  const [mode, setMode] = useState("browse");
-  const [learnIndex, setLearnIndex] = useState(0);
-  const [showMeaning, setShowMeaning] = useState(false);
-  const [testWords, setTestWords] = useState([]);
-  const [testIndex, setTestIndex] = useState(0);
-  const [testAnswer, setTestAnswer] = useState("");
-  const [testResult, setTestResult] = useState(null);
-  const [testScore, setTestScore] = useState({ correct: 0, total: 0 });
-  const [showPhonetic, setShowPhonetic] = useState(false);
+function VocabView({unit,setUnit,vp,save,rs,saveRs,today}) {
+  const [mode,setMode] = useState("browse");
+  const [idx,setIdx] = useState(0);
+  const [show,setShow] = useState(false);
+  const [testWords,setTestWords] = useState([]);
+  const [ti,setTi] = useState(0);
+  const [ta,setTa] = useState("");
+  const [tr,setTr] = useState(null);
+  const [score,setScore] = useState({c:0,t:0});
 
   const words = VOCAB_DATA[unit].words;
+  const batch = words.filter(w=>(vp[w.en]?.level||0)<3).slice(0,10);
 
-  const startLearn = () => {
-    const unlearned = words.filter(w => (vocabProgress[w.en]?.level || 0) < 3);
-    const batch = unlearned.slice(0, 10);
-    if (batch.length === 0) {
-      alert("这个单元的单词都已掌握！试试下一个单元吧。");
-      return;
+  const markWord = async (word,known) => {
+    const prev = vp[word.en] || {level:0};
+    const nl = known ? Math.min(prev.level+1,5) : Math.max(prev.level-1,0);
+    await save({...vp, [word.en]:{level:nl,lastDate:today}});
+    if (known && nl>=1) {
+      const days = EBB_INTERVALS[Math.min(nl-1,EBB_INTERVALS.length-1)];
+      const d = new Date(); d.setDate(d.getDate()+days);
+      await saveRs([...rs.filter(r=>r.word!==word.en||r.date!==d.toISOString().slice(0,10)), {word:word.en,zh:word.zh,date:d.toISOString().slice(0,10),done:false,unit}]);
     }
-    setLearnIndex(0);
-    setShowMeaning(false);
-    setShowPhonetic(false);
-    setMode("learn");
+    if (idx<batch.length-1) { setIdx(idx+1); setShow(false); } else setMode("browse");
   };
 
-  const learnBatch = mode === "learn" ? words.filter(w => (vocabProgress[w.en]?.level || 0) < 3).slice(0, 10) : [];
-  const currentWord = learnBatch[learnIndex];
-
-  const markWord = async (word, known) => {
-    const prev = vocabProgress[word.en] || { level: 0, lastDate: "" };
-    const newLevel = known ? Math.min(prev.level + 1, 5) : Math.max(prev.level - 1, 0);
-    const updated = { ...vocabProgress, [word.en]: { level: newLevel, lastDate: todayStr } };
-    await saveVocab(updated);
-
-    if (known && newLevel >= 1) {
-      const intervalIdx = Math.min(newLevel - 1, EBBINGHAUS_INTERVALS.length - 1);
-      const days = EBBINGHAUS_INTERVALS[intervalIdx];
-      const reviewDate = new Date();
-      reviewDate.setDate(reviewDate.getDate() + days);
-      const dateStr = reviewDate.toISOString().slice(0, 10);
-      const newSchedule = [...reviewSchedule.filter(r => r.word !== word.en || r.date !== dateStr), { word: word.en, zh: word.zh, date: dateStr, done: false, unit }];
-      await saveReview(newSchedule);
-    }
-
-    if (learnIndex < learnBatch.length - 1) {
-      setLearnIndex(learnIndex + 1);
-      setShowMeaning(false);
-      setShowPhonetic(false);
-    } else {
-      setMode("browse");
-      const log = { ...dailyLog, [todayStr]: { ...(dailyLog[todayStr] || {}), vocab: true, done: true } };
-      await saveDaily(log);
-    }
-  };
-
-  const startTest = () => {
-    const toTest = words.filter(w => (vocabProgress[w.en]?.level || 0) >= 1);
-    if (toTest.length < 5) {
-      alert("先学习至少5个单词再来测试！");
-      return;
-    }
-    const shuffled = [...toTest].sort(() => Math.random() - 0.5).slice(0, 10);
-    setTestWords(shuffled);
-    setTestIndex(0);
-    setTestAnswer("");
-    setTestResult(null);
-    setTestScore({ correct: 0, total: 0 });
-    setMode("test");
-  };
-
-  const checkTest = () => {
-    const correct = testAnswer.trim().toLowerCase() === testWords[testIndex].en.toLowerCase();
-    setTestResult(correct);
-    setTestScore(s => ({ correct: s.correct + (correct ? 1 : 0), total: s.total + 1 }));
-  };
-
-  const nextTest = async () => {
-    if (!testResult) {
-      const word = testWords[testIndex];
-      const prev = vocabProgress[word.en] || { level: 0, lastDate: "" };
-      const updated = { ...vocabProgress, [word.en]: { level: Math.max(prev.level - 1, 0), lastDate: todayStr } };
-      await saveVocab(updated);
-    }
-    if (testIndex < testWords.length - 1) {
-      setTestIndex(testIndex + 1);
-      setTestAnswer("");
-      setTestResult(null);
-    } else {
-      setMode("browse");
-    }
-  };
-
-  if (mode === "learn" && currentWord) {
-    return (
-      <div>
-        <button onClick={() => setMode("browse")} style={{ fontSize: 14, color: "#666", background: "none", marginBottom: 16, display: "flex", alignItems: "center", gap: 4 }}>← 返回</button>
-        <div style={{ textAlign: "center", marginBottom: 16, fontSize: 13, color: "#888" }}>
-          {learnIndex + 1} / {learnBatch.length}
-          <div className="progress-bar" style={{ marginTop: 8 }}>
-            <div className="progress-fill" style={{ width: `${(learnIndex + 1) / learnBatch.length * 100}%`, background: "#4a7dff" }} />
+  if (mode==="learn" && batch[idx]) {
+    const w = batch[idx];
+    return <div>
+      <button onClick={()=>setMode("browse")} style={{fontSize:14,color:"#666",background:"none",marginBottom:14}}>← 返回</button>
+      <div style={{textAlign:"center",fontSize:13,color:"#888",marginBottom:14}}>{idx+1}/{batch.length}</div>
+      <div className="card fi" style={{textAlign:"center",padding:"36px 20px"}}>
+        <span className="tag" style={{background:"#e8f0ff",color:"#4a7dff"}}>{w.pos}</span>
+        <h2 style={{fontSize:34,fontWeight:900,marginTop:14}}>{w.en}</h2>
+        <div style={{fontSize:14,color:"#aaa",marginTop:6}}>{w.phonetic}</div>
+        {show ? <div className="fi" style={{marginTop:20}}>
+          <div style={{fontSize:20,color:"#333",fontWeight:500}}>{w.zh}</div>
+          <div style={{marginTop:28,display:"flex",gap:12,justifyContent:"center"}}>
+            <button onClick={()=>markWord(w,false)} style={{padding:"12px 28px",background:"#fee",color:"#e94560",borderRadius:12,fontSize:15,fontWeight:600}}>😕 不认识</button>
+            <button onClick={()=>markWord(w,true)} style={{padding:"12px 28px",background:"#e8f5e9",color:"#4caf50",borderRadius:12,fontSize:15,fontWeight:600}}>😊 认识</button>
           </div>
-        </div>
-        <div className="card fade-in" style={{ textAlign: "center", padding: "40px 24px" }}>
-          <div className="tag" style={{ background: "#e8f0ff", color: "#4a7dff" }}>{currentWord.pos}</div>
-          <h2 style={{ fontSize: 36, fontWeight: 900, marginTop: 16, color: "#1a1a2e" }}>{currentWord.en}</h2>
-          <button onClick={() => setShowPhonetic(!showPhonetic)} style={{ marginTop: 8, fontSize: 14, color: "#888", background: "none" }}>
-            {showPhonetic ? currentWord.phonetic : "👁 显示音标"}
-          </button>
-          {showMeaning ? (
-            <div className="fade-in" style={{ marginTop: 24 }}>
-              <div style={{ fontSize: 22, color: "#333", fontWeight: 500 }}>{currentWord.zh}</div>
-              <div style={{ marginTop: 32, display: "flex", gap: 12, justifyContent: "center" }}>
-                <button onClick={() => markWord(currentWord, false)}
-                  style={{ padding: "14px 32px", background: "#fee", color: "#e94560", borderRadius: 12, fontSize: 16, fontWeight: 600 }}>
-                  😕 不认识
-                </button>
-                <button onClick={() => markWord(currentWord, true)}
-                  style={{ padding: "14px 32px", background: "#e8f5e9", color: "#4caf50", borderRadius: 12, fontSize: 16, fontWeight: 600 }}>
-                  😊 认识
-                </button>
-              </div>
-            </div>
-          ) : (
-            <button onClick={() => setShowMeaning(true)}
-              style={{ marginTop: 32, padding: "14px 40px", background: "#4a7dff", color: "#fff", borderRadius: 12, fontSize: 16, fontWeight: 600 }}>
-              翻开看看
-            </button>
-          )}
-        </div>
+        </div> : <button onClick={()=>setShow(true)} style={{marginTop:28,padding:"12px 36px",background:"#4a7dff",color:"#fff",borderRadius:12,fontSize:15,fontWeight:600}}>翻开看看</button>}
       </div>
-    );
+    </div>;
   }
 
-  if (mode === "test" && testWords.length > 0) {
-    const tw = testWords[testIndex];
-    return (
-      <div>
-        <button onClick={() => setMode("browse")} style={{ fontSize: 14, color: "#666", background: "none", marginBottom: 16 }}>← 返回</button>
-        <div style={{ textAlign: "center", marginBottom: 16, fontSize: 13, color: "#888" }}>
-          听写测试 {testIndex + 1} / {testWords.length} · 正确 {testScore.correct}/{testScore.total}
-        </div>
-        <div className="card fade-in" style={{ textAlign: "center", padding: "32px 24px" }}>
-          <div style={{ fontSize: 12, color: "#888", marginBottom: 8 }}>请写出这个词的英文</div>
-          <div style={{ fontSize: 28, fontWeight: 700, color: "#1a1a2e", marginBottom: 8 }}>{tw.zh}</div>
-          <div style={{ fontSize: 14, color: "#aaa", marginBottom: 24 }}>{tw.pos}</div>
-          <input
-            className="quiz-input"
-            value={testAnswer}
-            onChange={e => setTestAnswer(e.target.value)}
-            onKeyDown={e => e.key === "Enter" && (testResult === null ? checkTest() : nextTest())}
-            placeholder="输入英文单词..."
-            disabled={testResult !== null}
-            autoFocus
-            style={testResult !== null ? { borderColor: testResult ? "#4caf50" : "#e94560", background: testResult ? "#e8f5e9" : "#fee" } : {}}
-          />
-          {testResult !== null && (
-            <div className="fade-in" style={{ marginTop: 16 }}>
-              {testResult ? (
-                <div style={{ color: "#4caf50", fontWeight: 600 }}>✅ 正确！</div>
-              ) : (
-                <div>
-                  <div style={{ color: "#e94560", fontWeight: 600 }}>❌ 正确答案：<span style={{ fontSize: 18 }}>{tw.en}</span></div>
-                  <div style={{ color: "#888", fontSize: 13, marginTop: 4 }}>{tw.phonetic}</div>
-                </div>
-              )}
-            </div>
-          )}
-          <div style={{ marginTop: 24 }}>
-            {testResult === null ? (
-              <button onClick={checkTest} style={{ padding: "14px 40px", background: "#4a7dff", color: "#fff", borderRadius: 12, fontSize: 16, fontWeight: 600 }}>
-                检查
-              </button>
-            ) : (
-              <button onClick={nextTest} style={{ padding: "14px 40px", background: "#1a1a2e", color: "#fff", borderRadius: 12, fontSize: 16, fontWeight: 600 }}>
-                {testIndex < testWords.length - 1 ? "下一个 →" : "完成"}
-              </button>
-            )}
-          </div>
+  if (mode==="test") {
+    const tw = testWords[ti];
+    if (!tw) { setMode("browse"); return null; }
+    return <div>
+      <button onClick={()=>setMode("browse")} style={{fontSize:14,color:"#666",background:"none",marginBottom:14}}>← 返回</button>
+      <div style={{textAlign:"center",fontSize:13,color:"#888",marginBottom:14}}>听写 {ti+1}/{testWords.length} · 正确 {score.c}/{score.t}</div>
+      <div className="card fi" style={{textAlign:"center",padding:"28px 20px"}}>
+        <div style={{fontSize:12,color:"#888",marginBottom:6}}>写出英文单词</div>
+        <div style={{fontSize:26,fontWeight:700,marginBottom:6}}>{tw.zh}</div>
+        <div style={{fontSize:13,color:"#bbb",marginBottom:20}}>{tw.pos}</div>
+        <input className="qi" value={ta} onChange={e=>setTa(e.target.value)}
+          onKeyDown={e=>e.key==="Enter"&&(tr===null?(()=>{const c=ta.trim().toLowerCase()===tw.en.toLowerCase();setTr(c);setScore(s=>({c:s.c+(c?1:0),t:s.t+1}))})():(ti<testWords.length-1?(setTi(ti+1),setTa(""),setTr(null)):setMode("browse")))}
+          placeholder="输入英文..." disabled={tr!==null} autoFocus
+          style={tr!==null?{borderColor:tr?"#4caf50":"#e94560",background:tr?"#e8f5e9":"#fee"}:{}}
+        />
+        {tr!==null && <div className="fi" style={{marginTop:12}}>
+          {tr ? <div style={{color:"#4caf50",fontWeight:600}}>✅ 正确！</div> : <div><div style={{color:"#e94560",fontWeight:600}}>❌ 正确：{tw.en}</div><div style={{color:"#aaa",fontSize:13}}>{tw.phonetic}</div></div>}
+        </div>}
+        <div style={{marginTop:20}}>
+          {tr===null ?
+            <button onClick={()=>{const c=ta.trim().toLowerCase()===tw.en.toLowerCase();setTr(c);setScore(s=>({c:s.c+(c?1:0),t:s.t+1}))}} style={{padding:"12px 36px",background:"#4a7dff",color:"#fff",borderRadius:12,fontSize:15,fontWeight:600}}>检查</button>
+            : <button onClick={()=>{if(ti<testWords.length-1){setTi(ti+1);setTa("");setTr(null)}else setMode("browse")}} style={{padding:"12px 36px",background:"#1a1a2e",color:"#fff",borderRadius:12,fontSize:15,fontWeight:600}}>{ti<testWords.length-1?"下一个 →":"完成"}</button>
+          }
         </div>
       </div>
-    );
+    </div>;
   }
 
-  return (
-    <div>
-      <div style={{ display: "flex", gap: 8, overflowX: "auto", marginBottom: 20, paddingBottom: 4 }}>
-        {Object.entries(VOCAB_DATA).map(([u, data]) => {
-          const total = data.words.length;
-          const mastered = data.words.filter(w => (vocabProgress[w.en]?.level || 0) >= 3).length;
-          return (
-            <button key={u} onClick={() => setUnit(Number(u))}
-              style={{
-                padding: "10px 16px", borderRadius: 12, fontSize: 13, fontWeight: 600,
-                background: Number(u) === unit ? "#1a1a2e" : "#fff",
-                color: Number(u) === unit ? "#fff" : "#333",
-                border: Number(u) === unit ? "none" : "1px solid #ddd",
-                whiteSpace: "nowrap", flex: "0 0 auto",
-                boxShadow: Number(u) === unit ? "0 4px 12px rgba(0,0,0,.2)" : "none"
-              }}>
-              U{u} <span style={{ fontSize: 11, opacity: .7 }}>{mastered}/{total}</span>
-            </button>
-          );
-        })}
-      </div>
-      <div style={{ display: "flex", gap: 10, marginBottom: 20 }}>
-        <button onClick={startLearn}
-          style={{ flex: 1, padding: 16, background: "linear-gradient(135deg, #4a7dff, #6a9dff)", color: "#fff", borderRadius: 14, fontSize: 16, fontWeight: 700 }}>
-          📖 学习新词
-        </button>
-        <button onClick={startTest}
-          style={{ flex: 1, padding: 16, background: "linear-gradient(135deg, #e94560, #ff6b6b)", color: "#fff", borderRadius: 14, fontSize: 16, fontWeight: 700 }}>
-          ✍️ 听写测试
-        </button>
-      </div>
-      <div className="card">
-        <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 4 }}>Unit {unit}: {VOCAB_DATA[unit].name}</h3>
-        <p style={{ fontSize: 13, color: "#888", marginBottom: 16 }}>{words.length} 个单词</p>
-        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-          {words.map((w, i) => {
-            const level = vocabProgress[w.en]?.level || 0;
-            const colors = ["#eee", "#ffeaa7", "#fdcb6e", "#55efc4", "#00b894", "#00b894"];
-            return (
-              <div key={i} style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 14px", background: "#fafafa", borderRadius: 10, borderLeft: `4px solid ${colors[level]}` }}>
-                <div style={{ flex: 1 }}>
-                  <span style={{ fontWeight: 600, fontSize: 15 }}>{w.en}</span>
-                  <span style={{ color: "#aaa", fontSize: 12, marginLeft: 8 }}>{w.phonetic}</span>
-                </div>
-                <span style={{ fontSize: 13, color: "#555" }}>{w.zh}</span>
-                <span className="tag" style={{ background: colors[level] + "33", color: level >= 3 ? "#00b894" : level > 0 ? "#e17055" : "#999", minWidth: 36, textAlign: "center" }}>
-                  {level >= 3 ? "✓" : level > 0 ? `L${level}` : "新"}
-                </span>
-              </div>
-            );
-          })}
-        </div>
-      </div>
+  return <div>
+    <div style={{display:"flex",gap:6,overflowX:"auto",marginBottom:16,paddingBottom:4}}>
+      {Object.entries(VOCAB_DATA).map(([u,d])=>{
+        const m=d.words.filter(w=>(vp[w.en]?.level||0)>=3).length;
+        return <button key={u} onClick={()=>setUnit(Number(u))} style={{padding:"8px 14px",borderRadius:10,fontSize:12,fontWeight:600,
+          background:Number(u)===unit?"#1a1a2e":"#fff",color:Number(u)===unit?"#fff":"#333",border:Number(u)===unit?"none":"1px solid #ddd",whiteSpace:"nowrap",flex:"0 0 auto"}}>
+          U{u} {m}/{d.words.length}
+        </button>;
+      })}
     </div>
-  );
+    <div style={{display:"flex",gap:8,marginBottom:16}}>
+      <button onClick={()=>{if(batch.length===0){alert("已全部掌握！");return}setIdx(0);setShow(false);setMode("learn")}} style={{flex:1,padding:14,background:"linear-gradient(135deg,#4a7dff,#6a9dff)",color:"#fff",borderRadius:12,fontSize:15,fontWeight:700}}>📖 学习新词</button>
+      <button onClick={()=>{const t=words.filter(w=>(vp[w.en]?.level||0)>=1);if(t.length<3){alert("先学几个词再测试！");return}setTestWords([...t].sort(()=>Math.random()-.5).slice(0,10));setTi(0);setTa("");setTr(null);setScore({c:0,t:0});setMode("test")}} style={{flex:1,padding:14,background:"linear-gradient(135deg,#e94560,#ff6b6b)",color:"#fff",borderRadius:12,fontSize:15,fontWeight:700}}>✍️ 听写</button>
+    </div>
+    <div className="card">
+      <h3 style={{fontSize:15,fontWeight:700,marginBottom:4}}>Unit {unit}: {VOCAB_DATA[unit].name}</h3>
+      <p style={{fontSize:12,color:"#999",marginBottom:14}}>{words.length} 个单词</p>
+      {words.map((w,i)=>{
+        const l=vp[w.en]?.level||0;
+        const c=["#eee","#ffeaa7","#fdcb6e","#55efc4","#00b894","#00b894"];
+        return <div key={i} style={{display:"flex",alignItems:"center",gap:10,padding:"8px 12px",background:"#fafafa",borderRadius:8,marginBottom:6,borderLeft:`3px solid ${c[l]}`}}>
+          <div style={{flex:1}}><span style={{fontWeight:600,fontSize:14}}>{w.en}</span><span style={{color:"#bbb",fontSize:11,marginLeft:6}}>{w.phonetic}</span></div>
+          <span style={{fontSize:13,color:"#555"}}>{w.zh}</span>
+          <span className="tag" style={{background:c[l]+"33",color:l>=3?"#00b894":l>0?"#e17055":"#999",minWidth:32,textAlign:"center"}}>{l>=3?"✓":l>0?`L${l}`:"新"}</span>
+        </div>;
+      })}
+    </div>
+  </div>;
 }
 
 // ============================================================
 // GRAMMAR VIEW
 // ============================================================
-function GrammarView({ current, setCurrent, grammarProgress, saveGrammar }) {
-  const [exerciseMode, setExerciseMode] = useState(false);
-  const [exIndex, setExIndex] = useState(0);
-  const [answer, setAnswer] = useState("");
-  const [result, setResult] = useState(null);
-  const [score, setScore] = useState({ correct: 0, total: 0 });
+function GrammarView({cur,setCur}) {
+  const [exMode,setExMode] = useState(false);
+  const [ei,setEi] = useState(0);
+  const [a,setA] = useState("");
+  const [r,setR] = useState(null);
+  const [sc,setSc] = useState({c:0,t:0});
 
-  const grammar = GRAMMAR_DATA[current];
+  const g = GRAMMAR_DATA[cur];
 
-  const startExercise = () => {
-    setExerciseMode(true);
-    setExIndex(0);
-    setAnswer("");
-    setResult(null);
-    setScore({ correct: 0, total: 0 });
-  };
-
-  const checkAnswer = () => {
-    const correct = answer.trim().toLowerCase() === grammar.exercises[exIndex].a.toLowerCase();
-    setResult(correct);
-    setScore(s => ({ correct: s.correct + (correct ? 1 : 0), total: s.total + 1 }));
-  };
-
-  const nextExercise = async () => {
-    if (exIndex < grammar.exercises.length - 1) {
-      setExIndex(exIndex + 1);
-      setAnswer("");
-      setResult(null);
-    } else {
-      setExerciseMode(false);
-      const pct = (score.correct + (result ? 1 : 0)) / grammar.exercises.length;
-      const updated = { ...grammarProgress, [`grammar_${grammar.id}`]: pct };
-      await saveGrammar(updated);
-    }
-  };
-
-  if (exerciseMode) {
-    const ex = grammar.exercises[exIndex];
-    return (
-      <div>
-        <button onClick={() => setExerciseMode(false)} style={{ fontSize: 14, color: "#666", background: "none", marginBottom: 16 }}>← 返回</button>
-        <div style={{ textAlign: "center", marginBottom: 16, fontSize: 13, color: "#888" }}>
-          {grammar.title} · 第 {exIndex + 1}/{grammar.exercises.length} 题 · 正确 {score.correct}/{score.total}
-        </div>
-        <div className="card fade-in" style={{ padding: "32px 24px" }}>
-          <div className="tag" style={{ background: "#fff3e0", color: "#e8723a", marginBottom: 16 }}>{ex.hint}</div>
-          <div style={{ fontSize: 18, fontWeight: 600, lineHeight: 1.6, marginBottom: 24 }}>{ex.q}</div>
-          <input className="quiz-input" value={answer} onChange={e => setAnswer(e.target.value)}
-            onKeyDown={e => e.key === "Enter" && (result === null ? checkAnswer() : nextExercise())}
-            placeholder="输入答案..." disabled={result !== null} autoFocus
-            style={result !== null ? { borderColor: result ? "#4caf50" : "#e94560", background: result ? "#e8f5e9" : "#fee" } : {}} />
-          {result !== null && (
-            <div className="fade-in" style={{ marginTop: 16 }}>
-              {result ? (
-                <div style={{ color: "#4caf50", fontWeight: 600, fontSize: 16 }}>✅ 正确！</div>
-              ) : (
-                <div style={{ color: "#e94560", fontWeight: 600, fontSize: 16 }}>❌ 正确答案：{ex.a}</div>
-              )}
-            </div>
-          )}
-          <div style={{ marginTop: 24, textAlign: "center" }}>
-            {result === null ? (
-              <button onClick={checkAnswer} style={{ padding: "14px 40px", background: "#e8723a", color: "#fff", borderRadius: 12, fontSize: 16, fontWeight: 600 }}>检查</button>
-            ) : (
-              <button onClick={nextExercise} style={{ padding: "14px 40px", background: "#1a1a2e", color: "#fff", borderRadius: 12, fontSize: 16, fontWeight: 600 }}>
-                {exIndex < grammar.exercises.length - 1 ? "下一题 →" : "完成"}
-              </button>
-            )}
-          </div>
+  if (exMode) {
+    const ex = g.exercises[ei];
+    return <div>
+      <button onClick={()=>setExMode(false)} style={{fontSize:14,color:"#666",background:"none",marginBottom:14}}>← 返回</button>
+      <div style={{textAlign:"center",fontSize:13,color:"#888",marginBottom:14}}>{g.title} · {ei+1}/{g.exercises.length} · 正确 {sc.c}/{sc.t}</div>
+      <div className="card fi" style={{padding:"28px 20px"}}>
+        <span className="tag" style={{background:"#fff3e0",color:"#e8723a",marginBottom:14}}>{ex.hint}</span>
+        <div style={{fontSize:16,fontWeight:600,lineHeight:1.7,marginBottom:20,marginTop:10}}>{ex.q}</div>
+        <input className="qi" value={a} onChange={e=>setA(e.target.value)}
+          onKeyDown={e=>e.key==="Enter"&&(r===null?(()=>{const c=a.trim().toLowerCase()===ex.a.toLowerCase();setR(c);setSc(s=>({c:s.c+(c?1:0),t:s.t+1}))})():(ei<g.exercises.length-1?(setEi(ei+1),setA(""),setR(null)):setExMode(false)))}
+          placeholder="输入答案..." disabled={r!==null} autoFocus
+          style={r!==null?{borderColor:r?"#4caf50":"#e94560",background:r?"#e8f5e9":"#fee"}:{}}
+        />
+        {r!==null && <div className="fi" style={{marginTop:12}}>
+          {r ? <div style={{color:"#4caf50",fontWeight:600}}>✅ 正确！</div> : <div style={{color:"#e94560",fontWeight:600}}>❌ 正确答案：{ex.a}</div>}
+        </div>}
+        <div style={{marginTop:20,textAlign:"center"}}>
+          {r===null ?
+            <button onClick={()=>{const c=a.trim().toLowerCase()===ex.a.toLowerCase();setR(c);setSc(s=>({c:s.c+(c?1:0),t:s.t+1}))}} style={{padding:"12px 36px",background:"#e8723a",color:"#fff",borderRadius:12,fontSize:15,fontWeight:600}}>检查</button>
+            : <button onClick={()=>{ei<g.exercises.length-1?(setEi(ei+1),setA(""),setR(null)):setExMode(false)}} style={{padding:"12px 36px",background:"#1a1a2e",color:"#fff",borderRadius:12,fontSize:15,fontWeight:600}}>{ei<g.exercises.length-1?"下一题 →":"完成"}</button>
+          }
         </div>
       </div>
-    );
+    </div>;
   }
 
-  return (
-    <div>
-      <div style={{ display: "flex", gap: 8, overflowX: "auto", marginBottom: 20, paddingBottom: 4 }}>
-        {GRAMMAR_DATA.map((g, i) => {
-          const pct = grammarProgress[`grammar_${g.id}`] || 0;
-          return (
-            <button key={i} onClick={() => setCurrent(i)}
-              style={{
-                padding: "10px 16px", borderRadius: 12, fontSize: 12, fontWeight: 600,
-                background: i === current ? "#e8723a" : "#fff",
-                color: i === current ? "#fff" : "#333",
-                border: i === current ? "none" : "1px solid #ddd",
-                whiteSpace: "nowrap", flex: "0 0 auto",
-              }}>
-              {g.title} {pct >= 0.8 ? "✅" : ""}
-            </button>
-          );
-        })}
-      </div>
-      <div className="card">
-        <div className="tag" style={{ background: "#e8f0ff", color: "#4a7dff", marginBottom: 12 }}>Unit {grammar.unit}</div>
-        <h2 style={{ fontSize: 22, fontWeight: 700, marginBottom: 8 }}>{grammar.title}</h2>
-        <p style={{ fontSize: 14, color: "#666", lineHeight: 1.6, marginBottom: 20 }}>{grammar.explanation}</p>
-        {grammar.rules.map((r, i) => (
-          <div key={i} style={{ padding: 16, background: i % 2 === 0 ? "#f8f9ff" : "#fff8f0", borderRadius: 12, marginBottom: 10 }}>
-            <div style={{ fontWeight: 600, fontSize: 14, color: "#333", marginBottom: 6 }}>{r.rule}</div>
-            <div style={{ fontSize: 15, color: "#4a7dff", fontWeight: 500 }}>{r.example}</div>
-            <div style={{ fontSize: 13, color: "#888", marginTop: 4 }}>{r.translation}</div>
-          </div>
-        ))}
-      </div>
-      <button onClick={startExercise}
-        style={{ width: "100%", padding: 18, background: "linear-gradient(135deg, #e8723a, #ff9a56)", color: "#fff", borderRadius: 14, fontSize: 18, fontWeight: 700, marginTop: 8 }}>
-        ✏️ 开始练习 ({grammar.exercises.length} 题)
-      </button>
+  return <div>
+    <div style={{display:"flex",gap:6,overflowX:"auto",marginBottom:16,paddingBottom:4}}>
+      {GRAMMAR_DATA.map((gg,i)=><button key={i} onClick={()=>setCur(i)} style={{padding:"8px 14px",borderRadius:10,fontSize:12,fontWeight:600,
+        background:i===cur?"#e8723a":"#fff",color:i===cur?"#fff":"#333",border:i===cur?"none":"1px solid #ddd",whiteSpace:"nowrap",flex:"0 0 auto"}}>{gg.title}</button>)}
     </div>
-  );
+    <div className="card">
+      <span className="tag" style={{background:"#e8f0ff",color:"#4a7dff",marginBottom:10}}>Unit {g.unit}</span>
+      <h2 style={{fontSize:20,fontWeight:700,marginBottom:6,marginTop:8}}>{g.title}</h2>
+      <p style={{fontSize:13,color:"#666",lineHeight:1.6,marginBottom:16}}>{g.explanation}</p>
+      {g.rules.map((rr,i)=><div key={i} style={{padding:14,background:i%2===0?"#f8f9ff":"#fff8f0",borderRadius:10,marginBottom:8}}>
+        <div style={{fontWeight:600,fontSize:13,color:"#333",marginBottom:4}}>{rr.rule}</div>
+        <div style={{fontSize:14,color:"#4a7dff",fontWeight:500}}>{rr.example}</div>
+        <div style={{fontSize:12,color:"#888",marginTop:2}}>{rr.translation}</div>
+      </div>)}
+    </div>
+    <button onClick={()=>{setExMode(true);setEi(0);setA("");setR(null);setSc({c:0,t:0})}} style={{width:"100%",padding:16,background:"linear-gradient(135deg,#e8723a,#ff9a56)",color:"#fff",borderRadius:14,fontSize:16,fontWeight:700}}>
+      ✏️ 开始练习 ({g.exercises.length}题)
+    </button>
+  </div>;
 }
 
 // ============================================================
 // READING VIEW
 // ============================================================
-function ReadingView({ current, setCurrent }) {
-  const [showAnswers, setShowAnswers] = useState({});
-  const [userAnswers, setUserAnswers] = useState({});
-  const reading = READING_DATA[current];
+function ReadingView({cur,setCur}) {
+  const [showAns,setShowAns] = useState({});
+  const [userAns,setUserAns] = useState({});
+  const rd = READING_DATA[cur];
 
-  const toggleAnswer = (i) => {
-    setShowAnswers(prev => ({ ...prev, [i]: !prev[i] }));
-  };
-
-  return (
-    <div>
-      <div style={{ display: "flex", gap: 8, overflowX: "auto", marginBottom: 20, paddingBottom: 4 }}>
-        {READING_DATA.map((r, i) => (
-          <button key={i} onClick={() => { setCurrent(i); setShowAnswers({}); setUserAnswers({}); }}
-            style={{
-              padding: "10px 16px", borderRadius: 12, fontSize: 12, fontWeight: 600,
-              background: i === current ? "#4caf50" : "#fff",
-              color: i === current ? "#fff" : "#333",
-              border: i === current ? "none" : "1px solid #ddd",
-              whiteSpace: "nowrap", flex: "0 0 auto",
-            }}>
-            {r.title}
-          </button>
-        ))}
-      </div>
-      <div className="card">
-        <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
-          <span className="tag" style={{ background: "#e8f0ff", color: "#4a7dff" }}>Unit {reading.unit}</span>
-          <span className="tag" style={{ background: reading.difficulty === "基础" ? "#e8f5e9" : "#fff3e0", color: reading.difficulty === "基础" ? "#4caf50" : "#e8723a" }}>{reading.difficulty}</span>
-        </div>
-        <h2 style={{ fontSize: 20, fontWeight: 700, marginBottom: 16 }}>{reading.title}</h2>
-        <div style={{ fontSize: 15, lineHeight: 2, color: "#333", padding: 20, background: "#fafafa", borderRadius: 12, borderLeft: "4px solid #4caf50" }}>
-          {reading.text}
-        </div>
-      </div>
-      <div className="card">
-        <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 16 }}>❓ 阅读理解题</h3>
-        <p style={{ fontSize: 13, color: "#e94560", marginBottom: 16 }}>💡 提示：用完整句子回答！把问题中的词变成陈述句的开头。</p>
-        {reading.questions.map((q, i) => (
-          <div key={i} style={{ marginBottom: 20, padding: 16, background: "#fafafa", borderRadius: 12 }}>
-            <div style={{ fontWeight: 600, fontSize: 14, marginBottom: 10 }}>{i + 1}. {q.q}</div>
-            <textarea
-              value={userAnswers[i] || ""}
-              onChange={e => setUserAnswers(prev => ({ ...prev, [i]: e.target.value }))}
-              placeholder="在这里写你的答案..."
-              rows={2}
-              style={{ width: "100%", padding: 12, border: "1px solid #e0e0e0", borderRadius: 10, fontSize: 14, fontFamily: "inherit", resize: "vertical", outline: "none" }}
-            />
-            <button onClick={() => toggleAnswer(i)}
-              style={{ marginTop: 8, fontSize: 13, color: "#4a7dff", background: "none", fontWeight: 500 }}>
-              {showAnswers[i] ? "🙈 隐藏参考答案" : "👁 查看参考答案"}
-            </button>
-            {showAnswers[i] && (
-              <div className="fade-in" style={{ marginTop: 8, padding: 12, background: "#e8f5e9", borderRadius: 10, fontSize: 14, color: "#2e7d32" }}>
-                <strong>参考答案：</strong>{q.a}
-              </div>
-            )}
-          </div>
-        ))}
-      </div>
+  return <div>
+    <div style={{display:"flex",gap:6,overflowX:"auto",marginBottom:16,paddingBottom:4}}>
+      {READING_DATA.map((r,i)=><button key={i} onClick={()=>{setCur(i);setShowAns({});setUserAns({})}} style={{padding:"8px 14px",borderRadius:10,fontSize:12,fontWeight:600,
+        background:i===cur?"#4caf50":"#fff",color:i===cur?"#fff":"#333",border:i===cur?"none":"1px solid #ddd",whiteSpace:"nowrap",flex:"0 0 auto"}}>{r.title}</button>)}
     </div>
-  );
+    <div className="card">
+      <div style={{display:"flex",gap:6,marginBottom:10}}>
+        <span className="tag" style={{background:"#e8f0ff",color:"#4a7dff"}}>Unit {rd.unit}</span>
+        <span className="tag" style={{background:rd.difficulty==="基础"?"#e8f5e9":"#fff3e0",color:rd.difficulty==="基础"?"#4caf50":"#e8723a"}}>{rd.difficulty}</span>
+      </div>
+      <h2 style={{fontSize:18,fontWeight:700,marginBottom:14}}>{rd.title}</h2>
+      <div style={{fontSize:14,lineHeight:2,color:"#333",padding:16,background:"#fafafa",borderRadius:10,borderLeft:"4px solid #4caf50"}}>{rd.text}</div>
+    </div>
+    <div className="card">
+      <h3 style={{fontSize:15,fontWeight:700,marginBottom:6}}>❓ 阅读理解题</h3>
+      <p style={{fontSize:12,color:"#e94560",marginBottom:14}}>💡 用完整句子回答！</p>
+      {rd.questions.map((q,i)=><div key={i} style={{marginBottom:16,padding:14,background:"#fafafa",borderRadius:10}}>
+        <div style={{fontWeight:600,fontSize:13,marginBottom:8}}>{i+1}. {q.q}</div>
+        <textarea value={userAns[i]||""} onChange={e=>setUserAns(p=>({...p,[i]:e.target.value}))} placeholder="写答案..." rows={2}
+          style={{width:"100%",padding:10,border:"1px solid #e0e0e0",borderRadius:8,fontSize:13,fontFamily:"inherit",resize:"vertical",outline:"none"}}/>
+        <button onClick={()=>setShowAns(p=>({...p,[i]:!p[i]}))} style={{marginTop:6,fontSize:12,color:"#4a7dff",background:"none",fontWeight:500}}>
+          {showAns[i]?"🙈 隐藏答案":"👁 看答案"}
+        </button>
+        {showAns[i] && <div className="fi" style={{marginTop:6,padding:10,background:"#e8f5e9",borderRadius:8,fontSize:13,color:"#2e7d32"}}><b>参考：</b>{q.a}</div>}
+      </div>)}
+    </div>
+  </div>;
 }
 
 // ============================================================
-// REVIEW VIEW
+// REVIEW VIEW (Ebbinghaus)
 // ============================================================
-function ReviewView({ vocabProgress, saveVocab, reviewSchedule, saveReview, todayStr }) {
-  const [reviewIndex, setReviewIndex] = useState(0);
-  const [showMeaning, setShowMeaning] = useState(false);
-  const [reviewing, setReviewing] = useState(false);
+function ReviewView({vp,saveVp,rs,saveRs,today}) {
+  const [ri,setRi] = useState(0);
+  const [show,setShow] = useState(false);
+  const [active,setActive] = useState(false);
 
-  const todayReviews = reviewSchedule.filter(r => r.date <= todayStr && !r.done);
-  const completedToday = reviewSchedule.filter(r => r.date <= todayStr && r.done).length;
-
+  const due = rs.filter(r=>r.date<=today&&!r.done);
   const upcoming = {};
-  reviewSchedule.filter(r => r.date > todayStr && !r.done).forEach(r => {
-    upcoming[r.date] = (upcoming[r.date] || 0) + 1;
-  });
-
-  const startReview = () => {
-    if (todayReviews.length === 0) return;
-    setReviewIndex(0);
-    setShowMeaning(false);
-    setReviewing(true);
-  };
+  rs.filter(r=>r.date>today&&!r.done).forEach(r=>{upcoming[r.date]=(upcoming[r.date]||0)+1});
 
   const handleReview = async (known) => {
-    const item = todayReviews[reviewIndex];
-    const updated = reviewSchedule.map(r => r.word === item.word && r.date === item.date ? { ...r, done: true } : r);
-    const prev = vocabProgress[item.word] || { level: 0, lastDate: "" };
-    const newLevel = known ? Math.min(prev.level + 1, 5) : Math.max(prev.level - 1, 0);
-    const updatedVocab = { ...vocabProgress, [item.word]: { level: newLevel, lastDate: todayStr } };
-    await saveVocab(updatedVocab);
-
-    if (known && newLevel < 5) {
-      const intervalIdx = Math.min(newLevel, EBBINGHAUS_INTERVALS.length - 1);
-      const days = EBBINGHAUS_INTERVALS[intervalIdx];
-      const reviewDate = new Date();
-      reviewDate.setDate(reviewDate.getDate() + days);
-      const dateStr = reviewDate.toISOString().slice(0, 10);
-      updated.push({ word: item.word, zh: item.zh, date: dateStr, done: false, unit: item.unit });
+    const item = due[ri];
+    let updated = rs.map(r=>r.word===item.word&&r.date===item.date?{...r,done:true}:r);
+    const prev = vp[item.word]||{level:0};
+    const nl = known ? Math.min(prev.level+1,5) : Math.max(prev.level-1,0);
+    await saveVp({...vp,[item.word]:{level:nl,lastDate:today}});
+    if (known && nl<5) {
+      const d=new Date();d.setDate(d.getDate()+EBB_INTERVALS[Math.min(nl,EBB_INTERVALS.length-1)]);
+      updated.push({word:item.word,zh:item.zh,date:d.toISOString().slice(0,10),done:false,unit:item.unit});
     } else if (!known) {
-      const tomorrow = new Date();
-      tomorrow.setDate(tomorrow.getDate() + 1);
-      const dateStr = tomorrow.toISOString().slice(0, 10);
-      updated.push({ word: item.word, zh: item.zh, date: dateStr, done: false, unit: item.unit });
+      const d=new Date();d.setDate(d.getDate()+1);
+      updated.push({word:item.word,zh:item.zh,date:d.toISOString().slice(0,10),done:false,unit:item.unit});
     }
-
-    await saveReview(updated);
-
-    if (reviewIndex < todayReviews.length - 1) {
-      setReviewIndex(reviewIndex + 1);
-      setShowMeaning(false);
-    } else {
-      setReviewing(false);
-    }
+    await saveRs(updated);
+    if (ri<due.length-1){setRi(ri+1);setShow(false)} else setActive(false);
   };
 
-  if (reviewing && todayReviews.length > 0 && reviewIndex < todayReviews.length) {
-    const item = todayReviews[reviewIndex];
-    return (
-      <div>
-        <button onClick={() => setReviewing(false)} style={{ fontSize: 14, color: "#666", background: "none", marginBottom: 16 }}>← 返回</button>
-        <div style={{ textAlign: "center", marginBottom: 16, fontSize: 13, color: "#888" }}>
-          艾宾浩斯复习 · {reviewIndex + 1} / {todayReviews.length}
-          <div className="progress-bar" style={{ marginTop: 8 }}>
-            <div className="progress-fill" style={{ width: `${(reviewIndex + 1) / todayReviews.length * 100}%`, background: "#e94560" }} />
+  if (active && due[ri]) {
+    const item = due[ri];
+    return <div>
+      <button onClick={()=>setActive(false)} style={{fontSize:14,color:"#666",background:"none",marginBottom:14}}>← 返回</button>
+      <div style={{textAlign:"center",fontSize:13,color:"#888",marginBottom:14}}>复习 {ri+1}/{due.length}</div>
+      <div className="card fi" style={{textAlign:"center",padding:"40px 20px"}}>
+        <div style={{fontSize:13,color:"#888",marginBottom:6}}>你还记得吗？</div>
+        <div style={{fontSize:20,color:"#555",fontWeight:600}}>{item.zh}</div>
+        {show ? <div className="fi" style={{marginTop:20}}>
+          <div style={{fontSize:34,fontWeight:900}}>{item.word}</div>
+          <div style={{marginTop:28,display:"flex",gap:12,justifyContent:"center"}}>
+            <button onClick={()=>handleReview(false)} style={{padding:"12px 28px",background:"#fee",color:"#e94560",borderRadius:12,fontSize:15,fontWeight:600}}>😕 不记得</button>
+            <button onClick={()=>handleReview(true)} style={{padding:"12px 28px",background:"#e8f5e9",color:"#4caf50",borderRadius:12,fontSize:15,fontWeight:600}}>😊 记得</button>
           </div>
-        </div>
-        <div className="card fade-in" style={{ textAlign: "center", padding: "48px 24px" }}>
-          <div style={{ fontSize: 13, color: "#888", marginBottom: 8 }}>你还记得这个词吗？</div>
-          <h2 style={{ fontSize: 20, color: "#555", marginBottom: 8 }}>{item.zh}</h2>
-          {showMeaning ? (
-            <div className="fade-in">
-              <div style={{ fontSize: 36, fontWeight: 900, color: "#1a1a2e", marginTop: 16 }}>{item.word}</div>
-              <div style={{ marginTop: 32, display: "flex", gap: 12, justifyContent: "center" }}>
-                <button onClick={() => handleReview(false)}
-                  style={{ padding: "14px 32px", background: "#fee", color: "#e94560", borderRadius: 12, fontSize: 16, fontWeight: 600 }}>
-                  😕 不记得
-                </button>
-                <button onClick={() => handleReview(true)}
-                  style={{ padding: "14px 32px", background: "#e8f5e9", color: "#4caf50", borderRadius: 12, fontSize: 16, fontWeight: 600 }}>
-                  😊 记得
-                </button>
-              </div>
-            </div>
-          ) : (
-            <button onClick={() => setShowMeaning(true)}
-              style={{ marginTop: 24, padding: "14px 40px", background: "#e94560", color: "#fff", borderRadius: 12, fontSize: 16, fontWeight: 600 }}>
-              显示答案
-            </button>
-          )}
-        </div>
+        </div> : <button onClick={()=>setShow(true)} style={{marginTop:24,padding:"12px 36px",background:"#e94560",color:"#fff",borderRadius:12,fontSize:15,fontWeight:600}}>显示答案</button>}
       </div>
-    );
+    </div>;
   }
 
-  return (
-    <div>
-      <div className="card" style={{ background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)", color: "#fff" }}>
-        <h3 style={{ fontSize: 18, fontWeight: 700, marginBottom: 8 }}>🧠 艾宾浩斯遗忘曲线</h3>
-        <p style={{ fontSize: 13, lineHeight: 1.7, opacity: .9 }}>
-          根据科学研究，学过的内容如果不复习，1天后忘记约66%。我们按照 1天、2天、4天、7天、15天、30天 的间隔安排复习，帮助把短期记忆转化为长期记忆。
-        </p>
-        <div style={{ display: "flex", gap: 6, marginTop: 12, flexWrap: "wrap" }}>
-          {EBBINGHAUS_INTERVALS.map((d, i) => (
-            <span key={i} style={{ padding: "4px 10px", background: "rgba(255,255,255,.2)", borderRadius: 8, fontSize: 12 }}>
-              第{d}天
-            </span>
-          ))}
-        </div>
+  return <div>
+    <div className="card" style={{background:"linear-gradient(135deg,#667eea,#764ba2)",color:"#fff"}}>
+      <h3 style={{fontSize:17,fontWeight:700,marginBottom:6}}>🧠 艾宾浩斯遗忘曲线</h3>
+      <p style={{fontSize:12,lineHeight:1.7,opacity:.9}}>按 1→2→4→7→15→30 天间隔复习，短期记忆变长期记忆。</p>
+      <div style={{display:"flex",gap:4,marginTop:10,flexWrap:"wrap"}}>
+        {EBB_INTERVALS.map((d,i)=><span key={i} style={{padding:"3px 8px",background:"rgba(255,255,255,.2)",borderRadius:6,fontSize:11}}>第{d}天</span>)}
       </div>
-      <div className="card">
-        <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 16 }}>📅 今日复习</h3>
-        {todayReviews.length > 0 ? (
-          <>
-            <p style={{ fontSize: 14, color: "#666", marginBottom: 16 }}>有 {todayReviews.length} 个单词需要复习</p>
-            <button onClick={startReview}
-              style={{ width: "100%", padding: 18, background: "linear-gradient(135deg, #e94560, #ff6b6b)", color: "#fff", borderRadius: 14, fontSize: 18, fontWeight: 700 }}>
-              🔄 开始复习 ({todayReviews.length} 个)
-            </button>
-            <div style={{ marginTop: 16, maxHeight: 200, overflowY: "auto" }}>
-              {todayReviews.map((r, i) => (
-                <div key={i} style={{ padding: "8px 12px", background: "#fafafa", borderRadius: 8, marginBottom: 6, display: "flex", justifyContent: "space-between", fontSize: 14 }}>
-                  <span style={{ color: "#888" }}>{r.zh}</span>
-                  <span className="tag" style={{ background: "#fee", color: "#e94560" }}>待复习</span>
-                </div>
-              ))}
-            </div>
-          </>
-        ) : (
-          <div style={{ textAlign: "center", padding: 32 }}>
-            <div style={{ fontSize: 48, marginBottom: 12 }}>🎉</div>
-            <div style={{ fontSize: 16, fontWeight: 600, color: "#4caf50" }}>今日无需复习！</div>
-            <div style={{ fontSize: 13, color: "#888", marginTop: 4 }}>
-              {completedToday > 0 ? `已完成 ${completedToday} 个复习` : "去学习新单词吧！"}
-            </div>
-          </div>
-        )}
-      </div>
-      {Object.keys(upcoming).length > 0 && (
-        <div className="card">
-          <h3 style={{ fontSize: 16, fontWeight: 700, marginBottom: 16 }}>📆 未来复习安排</h3>
-          {Object.entries(upcoming).sort().slice(0, 7).map(([date, count]) => {
-            const d = new Date(date);
-            const dayName = d.toLocaleDateString("zh-CN", { month: "short", day: "numeric", weekday: "short" });
-            return (
-              <div key={date} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 14px", background: "#fafafa", borderRadius: 10, marginBottom: 8 }}>
-                <span style={{ fontSize: 14, fontWeight: 500 }}>{dayName}</span>
-                <span className="pill" style={{ background: "#e8f0ff", color: "#4a7dff" }}>{count} 个单词</span>
-              </div>
-            );
-          })}
-        </div>
-      )}
     </div>
-  );
+    <div className="card">
+      <h3 style={{fontSize:15,fontWeight:700,marginBottom:14}}>📅 今日复习</h3>
+      {due.length>0 ? <>
+        <p style={{fontSize:13,color:"#666",marginBottom:14}}>{due.length} 个单词需要复习</p>
+        <button onClick={()=>{setRi(0);setShow(false);setActive(true)}} style={{width:"100%",padding:16,background:"linear-gradient(135deg,#e94560,#ff6b6b)",color:"#fff",borderRadius:14,fontSize:16,fontWeight:700}}>
+          🔄 开始复习 ({due.length}个)
+        </button>
+      </> : <div style={{textAlign:"center",padding:30}}><div style={{fontSize:40,marginBottom:8}}>🎉</div><div style={{fontSize:15,fontWeight:600,color:"#4caf50"}}>今日无需复习！</div></div>}
+    </div>
+    {Object.keys(upcoming).length>0 && <div className="card">
+      <h3 style={{fontSize:15,fontWeight:700,marginBottom:14}}>📆 未来复习</h3>
+      {Object.entries(upcoming).sort().slice(0,7).map(([date,count])=><div key={date} style={{display:"flex",justifyContent:"space-between",padding:"8px 12px",background:"#fafafa",borderRadius:8,marginBottom:6}}>
+        <span style={{fontSize:13}}>{new Date(date).toLocaleDateString("zh-CN",{month:"short",day:"numeric",weekday:"short"})}</span>
+        <span className="tag" style={{background:"#e8f0ff",color:"#4a7dff"}}>{count}词</span>
+      </div>)}
+    </div>}
+  </div>;
 }
+
 
 // ============================================================
 // RENDER
