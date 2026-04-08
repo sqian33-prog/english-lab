@@ -3,37 +3,19 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>English Lab - 六年级英语提分工具</title>
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+  <title>Cindy's English Lab</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📚</text></svg>">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.9/babel.min.js"></script>
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: 'Noto Sans SC', 'Segoe UI', sans-serif; background: #faf9f7; color: #1a1a2e; min-height: 100vh; }
-    button { cursor: pointer; border: none; font-family: inherit; }
-    .card { background: #fff; border-radius: 16px; box-shadow: 0 2px 12px rgba(0,0,0,.06); padding: 24px; margin-bottom: 16px; transition: transform .2s, box-shadow .2s; }
-    .card:hover { transform: translateY(-2px); box-shadow: 0 6px 24px rgba(0,0,0,.1); }
-    .pill { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 500; }
-    .progress-bar { height: 8px; background: #e8e8e8; border-radius: 4px; overflow: hidden; }
-    .progress-fill { height: 100%; border-radius: 4px; transition: width .5s ease; }
-    .nav-btn { padding: 12px 20px; border-radius: 12px; font-size: 14px; font-weight: 500; transition: all .2s; }
-    .nav-btn:hover { transform: scale(1.02); }
-    .quiz-input { width: 100%; padding: 14px 18px; border: 2px solid #e0e0e0; border-radius: 12px; font-size: 16px; font-family: inherit; outline: none; transition: border-color .2s; }
-    .quiz-input:focus { border-color: #4a7dff; }
-    .tag { display: inline-block; padding: 3px 10px; border-radius: 6px; font-size: 11px; font-weight: 600; margin-right: 6px; }
-    @keyframes fadeIn { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
-    .fade-in { animation: fadeIn .4s ease; }
-    @keyframes pulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.05)} }
-    .pulse { animation: pulse 2s infinite; }
+    body { margin: 0; padding: 0; }
   </style>
 </head>
 <body>
-<div id="root"></div>
-
-<script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
-<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
-<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-<script src="supabase.js"></script>
-<script type="text/babel">
-const { useState, useEffect, useCallback, useMemo, useRef } = React;
+  <div id="root"></div>
+  <script type="text/babel">
+    const { useState, useEffect, useCallback, useMemo, useRef } = React;
 
 // ============================================================
 // SUPABASE CONFIG
@@ -633,7 +615,7 @@ const EBB_INTERVALS = [1, 2, 4, 7, 15, 30];
 // ============================================================
 // MAIN APP
 // ============================================================
-export default function App() {
+function App() {
   const [view, setView] = useState("home");
   const [currentUnit, setCurrentUnit] = useState(1);
   const [currentGrammar, setCurrentGrammar] = useState(0);
@@ -676,10 +658,10 @@ export default function App() {
         setSyncStatus("synced");
         // Also save to local as cache
         try {
-          await window.storage.set("vocabProgress", JSON.stringify(vp));
-          await window.storage.set("reviewSchedule", JSON.stringify(rs));
-          await window.storage.set("dailyLog", JSON.stringify(dl));
-          await window.storage.set("errorProgress", JSON.stringify(ep));
+          localStorage.setItem("vocabProgress", JSON.stringify(vp));
+          localStorage.setItem("reviewSchedule", JSON.stringify(rs));
+          localStorage.setItem("dailyLog", JSON.stringify(dl));
+          localStorage.setItem("errorProgress", JSON.stringify(ep));
         } catch {}
       }
 
@@ -689,7 +671,7 @@ export default function App() {
         const keys = ["vocabProgress","reviewSchedule","dailyLog","errorProgress"];
         const setters = [setVocabProgress, setReviewSchedule, setDailyLog, setErrorProgress];
         for (let i = 0; i < keys.length; i++) {
-          try { const r = await window.storage.get(keys[i]); if (r) setters[i](JSON.parse(r.value)); } catch {}
+          try { const v = localStorage.getItem(keys[i]); if (v) setters[i](JSON.parse(v)); } catch {}
         }
       }
 
@@ -701,7 +683,7 @@ export default function App() {
   const save = useCallback(async (key, val, setter) => {
     setter(val);
     // Save to local immediately
-    try { await window.storage.set(key, JSON.stringify(val)); } catch {}
+    try { localStorage.setItem(key, JSON.stringify(val)); } catch {}
 
     // Debounce cloud save (wait 1.5s after last change)
     if (saveTimer.current) clearTimeout(saveTimer.current);
@@ -826,7 +808,7 @@ export default function App() {
       <div style={{position:"fixed",bottom:0,left:0,right:0,background:"rgba(250,249,247,.95)",backdropFilter:"blur(10px)",borderTop:"1px solid #eee",padding:"6px 12px",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
         <button onClick={pullFromCloud} style={{fontSize:11,color:"#4a7dff",background:"none",fontWeight:500}}>⬇️ 从云端拉取</button>
         <button onClick={forceSync} style={{fontSize:11,color:"#4caf50",background:"none",fontWeight:500}}>⬆️ 上传到云端</button>
-        <button onClick={async()=>{if(confirm("确定重置所有进度？这会同时清除本地和云端数据。")){setVocabProgress({});setReviewSchedule([]);setDailyLog({});setErrorProgress({});try{await window.storage.delete("vocabProgress");await window.storage.delete("reviewSchedule");await window.storage.delete("dailyLog");await window.storage.delete("errorProgress")}catch{}await sbSave(userName,{vocabProgress:{},reviewSchedule:[],dailyLog:{},errorProgress:{},grammarProgress:{}})}}} style={{fontSize:11,color:"#bbb",background:"none"}}>重置进度</button>
+        <button onClick={async()=>{if(confirm("确定重置所有进度？这会同时清除本地和云端数据。")){setVocabProgress({});setReviewSchedule([]);setDailyLog({});setErrorProgress({});try{localStorage.removeItem("vocabProgress");localStorage.removeItem("reviewSchedule");localStorage.removeItem("dailyLog");localStorage.removeItem("errorProgress")}catch{}await sbSave(userName,{vocabProgress:{},reviewSchedule:[],dailyLog:{},errorProgress:{},grammarProgress:{}})}}} style={{fontSize:11,color:"#bbb",background:"none"}}>重置进度</button>
       </div>
     </div>
   );
@@ -1400,12 +1382,9 @@ function ReviewView({vp,saveVp,rs,saveRs,today}) {
   </div>;
 }
 
-
-// ============================================================
-// RENDER
-// ============================================================
-const root = ReactDOM.createRoot(document.getElementById('root'));
-root.render(<App />);
-</script>
+    // Render
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(React.createElement(App));
+  </script>
 </body>
 </html>
